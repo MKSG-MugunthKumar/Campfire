@@ -50,6 +50,8 @@ import app.campfire.common.settings.CampfireSettings.Theme.LIGHT
 import app.campfire.common.settings.CampfireSettings.Theme.SYSTEM
 import app.campfire.core.di.UserScope
 import app.campfire.core.extensions.capitalized
+import app.campfire.ui.settings.composables.Header
+import app.campfire.ui.settings.composables.TentSetting
 import campfire.ui.settings.generated.resources.Res
 import campfire.ui.settings.generated.resources.setting_dynamic_colors_description
 import campfire.ui.settings.generated.resources.setting_dynamic_colors_title
@@ -94,6 +96,17 @@ fun Settings(
         .verticalScroll(rememberScrollState())
         .padding(paddingValues),
     ) {
+      Header(
+        title = {
+          Text("Theme & Style")
+        },
+      )
+
+      TentSetting(
+        tent = state.tent,
+        onTentChange = { state.eventSink(SettingsUiEvent.ChangeTent(it)) },
+      )
+
       ListItem(
         headlineContent = { Text(stringResource(Res.string.setting_theme_title)) },
         supportingContent = { Text(stringResource(Res.string.setting_theme_description)) },
@@ -179,6 +192,12 @@ fun Settings(
             checked = state.useDynamicColors,
             onCheckedChange = { state.eventSink(SettingsUiEvent.UseDynamicColors(it)) },
           )
+        },
+      )
+
+      Header(
+        title = {
+          Text("About")
         },
       )
 
