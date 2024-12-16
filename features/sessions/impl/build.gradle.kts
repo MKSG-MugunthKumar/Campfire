@@ -9,6 +9,10 @@ plugins {
 
 @OptIn(org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi::class)
 kotlin {
+  compilerOptions {
+    freeCompilerArgs.add("-opt-in=kotlin.uuid.ExperimentalUuidApi")
+  }
+
   sourceSets {
     commonMain {
       dependencies {
@@ -20,6 +24,7 @@ kotlin {
         implementation(projects.data.network.public)
         implementation(projects.data.account.api)
         implementation(projects.data.mapping)
+        implementation(projects.features.libraries.api)
         implementation(libs.store)
       }
     }

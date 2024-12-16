@@ -7,7 +7,6 @@ import app.campfire.core.model.Chapter
 import app.campfire.core.model.FileMetadata
 import app.campfire.core.model.LibraryItem
 import app.campfire.core.model.Media as DomainMedia
-import app.campfire.core.model.MediaProgress
 import app.campfire.core.model.MediaType as DomainMediaType
 import app.campfire.core.model.SeriesSequence
 import app.campfire.core.util.createIfNotNull
@@ -156,6 +155,7 @@ suspend fun SelectForLibrary.asDomainModel(
         },
       ),
       coverImageUrl = coverImageHydrator.hydrateLibraryItem(id),
+      coverPath = coverPath,
       tags = tags ?: emptyList(),
       numTracks = numTracks,
       numAudioFiles = numAudioFiles,
@@ -215,6 +215,7 @@ suspend fun SelectForSeries.asDomainModel(
         },
       ),
       coverImageUrl = coverImageHydrator.hydrateLibraryItem(id),
+      coverPath = coverPath,
       tags = tags ?: emptyList(),
       numTracks = numTracks,
       numAudioFiles = numAudioFiles,
@@ -274,6 +275,7 @@ suspend fun SelectForCollection.asDomainModel(
         },
       ),
       coverImageUrl = coverImageHydrator.hydrateLibraryItem(id),
+      coverPath = coverPath,
       tags = tags ?: emptyList(),
       numTracks = numTracks,
       numAudioFiles = numAudioFiles,
@@ -333,6 +335,7 @@ suspend fun SelectForAuthorName.asDomainModel(
         },
       ),
       coverImageUrl = coverImageHydrator.hydrateLibraryItem(id),
+      coverPath = coverPath,
       tags = tags ?: emptyList(),
       numTracks = numTracks,
       numAudioFiles = numAudioFiles,
@@ -442,13 +445,13 @@ suspend fun SelectForId.asDomainModel(
           startOffset = it.startOffset.toFloat(),
           duration = it.duration.toFloat(),
           title = it.title,
-          contentUrl = it.contentUrl,
+          contentUrl = coverImageHydrator.hydrateUrl(it.contentUrl),
           mimeType = it.mimeType,
           codec = it.codec,
           metadata = FileMetadata(
             filename = it.metadata_filename,
             ext = it.metadata_ext,
-            path = it.metadata_path,
+            path = coverImageHydrator.hydrateUrl(it.metadata_path),
             relPath = it.metadata_relPath,
             size = it.metadata_size,
             mtimeMs = it.metadata_mtimeMs,
@@ -458,6 +461,7 @@ suspend fun SelectForId.asDomainModel(
         )
       },
       coverImageUrl = coverImageHydrator.hydrateLibraryItem(id),
+      coverPath = coverPath,
       tags = tags ?: emptyList(),
       numTracks = numTracks,
       numAudioFiles = numAudioFiles,
@@ -468,24 +472,6 @@ suspend fun SelectForId.asDomainModel(
       sizeInBytes = sizeInBytes,
       ebookFormat = ebookFormat,
     ),
-    userMediaProgress = mediaProgress?.let { progress ->
-      MediaProgress(
-        id = progress.id,
-        userId = progress.userId,
-        libraryItemId = progress.libraryItemId,
-        episodeId = progress.episodeId,
-        mediaItemId = progress.mediaItemId,
-        mediaItemType = progress.mediaItemType,
-        duration = progress.duration.toFloat(),
-        progress = progress.progress.toFloat(),
-        currentTime = progress.currentTime.toFloat(),
-        isFinished = progress.isFinished,
-        hideFromContinueListening = progress.hideFromContinueListening,
-        ebookLocation = progress.ebookLocation,
-        ebookProgress = progress.ebookProgress?.toFloat(),
-        lastUpdate = progress.lastUpdate,
-        startedAt = progress.startedAt,
-      )
-    },
+    userMediaProgress = mediaProgress?.asDomainModel(),
   )
 }

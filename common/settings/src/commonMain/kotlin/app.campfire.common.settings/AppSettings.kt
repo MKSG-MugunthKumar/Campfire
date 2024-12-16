@@ -22,9 +22,33 @@ abstract class AppSettings {
     }
   }
 
+  fun longSetting(key: String, defaultValue: Long) = object : ReadWriteProperty<AppSettings, Long> {
+    override fun getValue(thisRef: AppSettings, property: KProperty<*>): Long {
+      return settings.getLong(key, defaultValue)
+    }
+
+    override fun setValue(thisRef: AppSettings, property: KProperty<*>, value: Long) {
+      settings.putLong(key, value)
+    }
+  }
+
   fun stringSetting(key: String, defaultValue: String = "") = object : ReadWriteProperty<AppSettings, String> {
     override fun getValue(thisRef: AppSettings, property: KProperty<*>): String {
       return settings.getString(key, defaultValue)
+    }
+
+    override fun setValue(thisRef: AppSettings, property: KProperty<*>, value: String) {
+      settings.putString(key, value)
+    }
+  }
+
+  fun stringSetting(key: String, initializer: () -> String) = object : ReadWriteProperty<AppSettings, String> {
+    override fun getValue(thisRef: AppSettings, property: KProperty<*>): String {
+      if (!settings.hasKey(key)) {
+        settings.putString(key, initializer())
+      }
+      return settings.getStringOrNull(key)
+        ?: throw IllegalStateException("This value should have been initialized")
     }
 
     override fun setValue(thisRef: AppSettings, property: KProperty<*>, value: String) {

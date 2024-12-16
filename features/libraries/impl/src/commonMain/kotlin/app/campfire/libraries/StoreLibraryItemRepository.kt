@@ -25,7 +25,8 @@ import app.cash.sqldelight.coroutines.mapToOneOrNull
 import com.r0adkll.kimchi.annotations.ContributesBinding
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.filterNot
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.withContext
@@ -34,6 +35,8 @@ import org.mobilenativefoundation.store.store5.Fetcher
 import org.mobilenativefoundation.store.store5.SourceOfTruth
 import org.mobilenativefoundation.store.store5.StoreBuilder
 import org.mobilenativefoundation.store.store5.StoreReadRequest
+import org.mobilenativefoundation.store.store5.StoreReadResponse
+import org.mobilenativefoundation.store.store5.impl.extensions.fresh
 
 @SingleIn(UserScope::class)
 @ContributesBinding(UserScope::class)
@@ -57,8 +60,8 @@ class StoreLibraryItemRepository(
           .selectForId(itemId)
           .asFlow()
           .mapToOneOrNull(dispatcherProvider.databaseRead)
-          .filterNotNull()
           .mapLatest { item ->
+            if (item == null) return@mapLatest null
             withContext(dispatcherProvider.databaseRead) {
               val (audioFiles, audioTracks, chapters, progress, authors) = db.transactionWithResult {
                 val audioFiles = db.mediaAudioFilesQueries
@@ -110,7 +113,11 @@ class StoreLibraryItemRepository(
             // 3) Insert relations
 
             itemExpanded.userMediaProgress?.let { progress ->
-              db.mediaProgressQueries.insert(progress.asDbModel())
+              // Only insert the media progress if the one we have locally isn't newer
+              val existing = db.mediaProgressQueries.selectForLibraryItem(itemId).executeAsOneOrNull()
+              if (existing == null || existing.lastUpdate < progress.lastUpdate) {
+                db.mediaProgressQueries.insert(progress.asDbModel())
+              }
             }
 
             itemExpanded.media.audioFiles.forEach { audioFile ->
@@ -145,6 +152,19 @@ class StoreLibraryItemRepository(
         bark { "Library Item Store Response ($resp)" }
         resp.dataOrNull()
       }
+  }
+
+  override suspend fun getLibraryItem(itemId: LibraryItemId): LibraryItem {
+    val cached = itemStore.stream(StoreReadRequest.cached(itemId, false))
+      .filterNot { it is StoreReadResponse.Loading || it is StoreReadResponse.NoNewData }
+      .firstOrNull()
+      ?.dataOrNull()
+
+    return if (cached != null && cached.media.tracks.isNotEmpty()) {
+      cached
+    } else {
+      itemStore.fresh(itemId)
+    }
   }
 }
 
