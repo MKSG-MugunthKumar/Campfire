@@ -6,7 +6,6 @@ import app.campfire.account.api.UserRepository
 import app.campfire.core.coroutines.DispatcherProvider
 import app.campfire.core.di.SingleIn
 import app.campfire.core.di.UserScope
-import app.campfire.core.logging.bark
 import app.campfire.core.model.LibraryId
 import app.campfire.core.model.LibraryItem
 import app.campfire.core.model.Series
@@ -176,8 +175,9 @@ class StoreSeriesRepository(
             refresh = true,
           ),
         ).mapNotNull { response ->
-          bark { "Series Library Item Response: $response" }
           response.dataOrNull()
+        }.mapLatest { items ->
+          items.sortedBy { it.media.metadata.seriesSequence?.sequence }
         }
       }
   }

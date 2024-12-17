@@ -22,6 +22,7 @@ import app.campfire.data.SelectForCollection
 import app.campfire.data.SelectForId
 import app.campfire.data.SelectForLibrary
 import app.campfire.data.SelectForSeries
+import app.campfire.network.models.ExpandedBookMetadata
 import app.campfire.network.models.LibraryItemBase
 import app.campfire.network.models.Media
 import app.campfire.network.models.MediaExpanded
@@ -69,6 +70,7 @@ fun <T : Media> T.asDbModel(
   }
 
   val metadataSeries = (metadata as? MinifiedBookMetadata)?.series
+    ?: (metadata as? ExpandedBookMetadata)?.series?.firstOrNull()
   return DatabaseMedia(
     libraryItemId = libraryItemId,
 
