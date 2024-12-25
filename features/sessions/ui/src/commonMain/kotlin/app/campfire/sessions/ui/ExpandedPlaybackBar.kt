@@ -67,6 +67,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import app.campfire.audioplayer.AudioPlayer
@@ -77,8 +78,8 @@ import app.campfire.common.compose.LocalWindowSizeClass
 import app.campfire.common.compose.extensions.readoutFormat
 import app.campfire.common.compose.icons.rounded.EditAudio
 import app.campfire.common.compose.layout.isSupportingPaneEnabled
+import app.campfire.common.compose.theme.PaytoneOneFontFamily
 import app.campfire.common.compose.widgets.CoverImage
-import app.campfire.common.compose.widgets.CoverImageSize
 import app.campfire.core.extensions.fluentIf
 import app.campfire.core.model.Chapter
 import app.campfire.core.model.Session
@@ -99,7 +100,7 @@ import kotlinx.coroutines.launch
 private val ExpandedVerticalOffsetFactor = 56.dp
 private val ExpandedHorizontalOffsetFactor = 4.dp
 private val ExpandedCornerRadiusFactor = 24.dp
-private val LargeCoverImageSize = 188.dp
+internal val LargeCoverImageSize = 188.dp
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -269,8 +270,6 @@ internal fun ExpandedPlaybackBar(
       Column(
         Modifier.weight(1f),
       ) {
-        Spacer(Modifier.height(16.dp))
-
         Column(
           modifier = Modifier
             .fillMaxWidth()
@@ -281,14 +280,17 @@ internal fun ExpandedPlaybackBar(
           Box(
             contentAlignment = Alignment.Center,
           ) {
-            val imageSize = if (windowSizeClass.isSupportingPaneEnabled) {
-              LargeCoverImageSize
-            } else {
-              CoverImageSize
-            }
+            val imageSize = 300.dp // CoverImageSize
+//              if (windowSizeClass.isSupportingPaneEnabled) {
+//              LargeCoverImageSize
+//            } else {
+//              CoverImageSize
+//            }
 
+            val mediaUrl = currentMetadata.artworkUri
+              ?: session.libraryItem.media.coverImageUrl
             CoverImage(
-              imageUrl = session.libraryItem.media.coverImageUrl,
+              imageUrl = mediaUrl,
               contentDescription = session.libraryItem.media.metadata.title,
               size = imageSize,
               modifier = Modifier
@@ -328,6 +330,8 @@ internal fun ExpandedPlaybackBar(
             text = currentMetadata.title ?: "--",
             textAlign = TextAlign.Center,
             style = MaterialTheme.typography.headlineMedium,
+            fontWeight = FontWeight.SemiBold,
+            fontFamily = PaytoneOneFontFamily,
             modifier = Modifier
               .align(Alignment.CenterHorizontally)
               .padding(horizontal = 24.dp),
@@ -336,7 +340,7 @@ internal fun ExpandedPlaybackBar(
           Text(
             text = session.libraryItem.media.metadata.title ?: "",
             textAlign = TextAlign.Center,
-            style = MaterialTheme.typography.titleLarge,
+            style = MaterialTheme.typography.titleMedium,
             modifier = Modifier
               .align(Alignment.CenterHorizontally)
               .padding(horizontal = 24.dp)
@@ -411,6 +415,7 @@ private fun PlaybackSeekBar(
   currentTime: Duration,
   currentDuration: Duration,
   onSeek: (Float) -> Unit,
+  // FIXME: This is an error to not be attached to something, Also that this composable emits multiple items
   modifier: Modifier = Modifier,
   interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
 ) {

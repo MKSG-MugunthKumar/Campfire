@@ -51,6 +51,7 @@ import app.campfire.common.screens.LibraryItemScreen
 import app.campfire.core.coroutines.LoadState
 import app.campfire.core.coroutines.onLoaded
 import app.campfire.core.di.UserScope
+import app.campfire.core.extensions.seconds
 import app.campfire.core.model.Chapter
 import app.campfire.core.model.LibraryItem
 import app.campfire.libraries.ui.detail.composables.AuthorNarratorBar
@@ -66,7 +67,6 @@ import campfire.features.libraries.ui.generated.resources.header_chapters
 import campfire.features.libraries.ui.generated.resources.placeholder_book
 import campfire.features.libraries.ui.generated.resources.unknown_title
 import com.r0adkll.kimchi.circuit.annotations.CircuitInject
-import kotlin.math.roundToLong
 import kotlin.time.Duration.Companion.milliseconds
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
@@ -142,6 +142,7 @@ fun LibraryItem(
         onMarkFinished = {
         },
         onDiscardProgress = {
+          state.eventSink(LibraryItemUiEvent.DiscardProgress(contentState.data))
         },
       )
     }
@@ -336,9 +337,7 @@ fun LoadedState(
       item.media.chapters.forEach { chapter ->
         DurationListItem(
           title = chapter.title,
-          duration = chapter.start.times(100f)
-            .roundToLong()
-            .milliseconds,
+          duration = chapter.start.seconds,
           modifier = Modifier
             .clickable {
               onChapterClick(chapter)

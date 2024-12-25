@@ -1,7 +1,7 @@
 import app.campfire.core.model.MediaType;
 import kotlin.Boolean;
 
-CREATE TABLE mediaProgress (
+CREATE TABLE IF NOT EXISTS mediaProgress (
   id TEXT NOT NULL PRIMARY KEY ,
   userId TEXT NOT NULL,
   libraryItemId TEXT NOT NULL,
@@ -23,6 +23,10 @@ CREATE TABLE mediaProgress (
 insert:
 INSERT OR REPLACE INTO mediaProgress
 VALUES ?;
+
+delete:
+DELETE FROM mediaProgress
+WHERE libraryItemId = ?;
 
 updateCurrentTime:
 UPDATE OR IGNORE mediaProgress
