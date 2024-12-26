@@ -27,7 +27,7 @@ class DesktopPlaybackController(
 
   override fun startSession(itemId: LibraryItemId, playImmediately: Boolean) {
     userScopeHolder.get().launch {
-      audioPlayerHolder.setCurrentPlayer(VlcAudioPlayer(playbackSettings, fatherTime))
+      initializeAudioPlayerIfNeeded()
       playbackSessionManager.startSession(itemId, playImmediately)
     }
   }
@@ -36,6 +36,12 @@ class DesktopPlaybackController(
     userScopeHolder.get().launch {
       playbackSessionManager.stopSession(itemId)
       audioPlayerHolder.release()
+    }
+  }
+
+  private fun initializeAudioPlayerIfNeeded() {
+    if (audioPlayerHolder.currentPlayer.value == null) {
+      audioPlayerHolder.setCurrentPlayer(VlcAudioPlayer(playbackSettings, fatherTime))
     }
   }
 }

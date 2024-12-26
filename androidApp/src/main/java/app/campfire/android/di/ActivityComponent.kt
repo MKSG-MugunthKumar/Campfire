@@ -5,17 +5,17 @@ package app.campfire.android.di
 
 import android.app.Activity
 import androidx.core.os.ConfigurationCompat
-import app.campfire.core.di.ActivityScope
 import app.campfire.core.di.AppScope
 import app.campfire.core.di.SingleIn
+import app.campfire.core.di.WindowScope
 import app.campfire.shared.root.CampfireContent
 import com.r0adkll.kimchi.annotations.ContributesSubcomponent
 import java.util.Locale
 import me.tatarka.inject.annotations.Provides
 
-@SingleIn(ActivityScope::class)
+@SingleIn(WindowScope::class)
 @ContributesSubcomponent(
-  scope = ActivityScope::class,
+  scope = WindowScope::class,
   parentScope = AppScope::class,
 )
 interface ActivityComponent {
