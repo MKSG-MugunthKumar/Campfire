@@ -7,6 +7,8 @@ import kotlinx.coroutines.flow.Flow
 
 interface SessionsRepository {
 
+  suspend fun getSession(libraryItemId: LibraryItemId): Session?
+
   /**
    * Create a new listening session to begin playback
    * @param item The item to begin listening to
@@ -15,7 +17,9 @@ interface SessionsRepository {
   suspend fun createSession(libraryItemId: LibraryItemId): Session
 
   /**
-   * Delete a listening session
+   * Delete a listening session and discard the media progress locally and remotely for the
+   * item.
+   *
    * @param libraryItemId The id of the session to delete
    */
   suspend fun deleteSession(libraryItemId: LibraryItemId)
@@ -25,9 +29,19 @@ interface SessionsRepository {
    * @param libraryItemId the id of the item to update
    * @param currentTime the current time to update
    */
-  suspend fun updateSession(
+  suspend fun updateCurrentTime(
     libraryItemId: LibraryItemId,
     currentTime: Duration,
+  )
+
+  /**
+   * Add the [amount] of time to the timeListening for the current [libraryItemId] session
+   * @param libraryItemId the id of the session to update
+   * @param amount the amount of time to add to the cumulative listening time
+   */
+  suspend fun addTimeListening(
+    libraryItemId: LibraryItemId,
+    amount: Duration,
   )
 
   /**

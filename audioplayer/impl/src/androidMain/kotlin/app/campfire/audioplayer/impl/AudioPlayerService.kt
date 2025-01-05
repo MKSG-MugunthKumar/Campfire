@@ -7,43 +7,28 @@ import android.app.NotificationManager
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
-import android.os.Bundle
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import androidx.core.os.bundleOf
 import androidx.media3.common.Player
-import androidx.media3.session.MediaController
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSession.ConnectionResult
 import androidx.media3.session.MediaSession.ConnectionResult.AcceptedResultBuilder
 import androidx.media3.session.MediaSessionService
-import androidx.media3.session.SessionCommand
-import androidx.media3.session.SessionError
-import androidx.media3.session.SessionResult
 import app.campfire.audioplayer.AudioPlayerHolder
-import app.campfire.audioplayer.impl.session.PlaybackSessionManager
+import app.campfire.core.di.AppScope
 import app.campfire.core.di.ComponentHolder
-import app.campfire.core.di.UserScope
 import app.campfire.core.logging.LogPriority
 import app.campfire.core.logging.bark
-import app.campfire.core.model.LibraryItemId
-import app.campfire.sessions.api.SessionsRepository
-import com.google.common.util.concurrent.Futures
-import com.google.common.util.concurrent.ListenableFuture
 import com.r0adkll.kimchi.annotations.ContributesTo
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
-@ContributesTo(UserScope::class)
+@ContributesTo(AppScope::class)
 interface AudioPlayerComponent {
   val audioPlayerHolder: AudioPlayerHolder // AppScope
-  val exoPlayerFactory: ExoPlayerAudioPlayer.Factory // UserScope
-  val sessionsRepository: SessionsRepository // UserScope
-  val playbackSessionManager: PlaybackSessionManager // UserScope
+  val exoPlayerFactory: ExoPlayerAudioPlayer.Factory // AppScope
 }
 
 @SuppressLint("UnsafeOptInUsageError")
@@ -142,56 +127,11 @@ class AudioPlayerService : MediaSessionService() {
       controller: MediaSession.ControllerInfo,
     ): ConnectionResult {
       val sessionCommands = ConnectionResult.DEFAULT_SESSION_COMMANDS.buildUpon()
-        .add(SessionCommand(ACTION_PREPARE_SESSION, Bundle.EMPTY))
-        .add(SessionCommand(ACTION_CLEAR_SESSION, Bundle.EMPTY))
         .build()
 
       return AcceptedResultBuilder(session)
         .setAvailableSessionCommands(sessionCommands)
         .build()
-    }
-
-    override fun onCustomCommand(
-      session: MediaSession,
-      controller: MediaSession.ControllerInfo,
-      customCommand: SessionCommand,
-      args: Bundle,
-    ): ListenableFuture<SessionResult> {
-      if (customCommand.customAction == ACTION_PREPARE_SESSION) {
-        val libraryItemId = args.getString(EXTRA_LIBRARY_ITEM_ID) ?: return sessionResult(SessionError.ERROR_BAD_VALUE)
-        val playImmediately = args.getBoolean(EXTRA_PLAY_IMMEDIATELY)
-        val chapterId = args.getInt(EXTRA_CHAPTER_ID, UNSET_CHAPTER_ID)
-
-        // Attach the meta data to the action
-        session.sessionExtras = Bundle().apply {
-          putString(EXTRA_LIBRARY_ITEM_ID, libraryItemId)
-        }
-
-        // Launch the manager to pull/create/prepare the session for the given element
-        serviceScope.launch {
-          component.playbackSessionManager
-            .startSession(libraryItemId, playImmediately, chapterId.takeIf { it != UNSET_CHAPTER_ID })
-        }
-
-        return sessionResult(SessionResult.RESULT_SUCCESS)
-      } else if (customCommand.customAction == ACTION_CLEAR_SESSION) {
-        val libraryItemId = args.getString(EXTRA_LIBRARY_ITEM_ID) ?: return sessionResult(SessionError.ERROR_BAD_VALUE)
-
-        serviceScope.launch {
-          component.playbackSessionManager.stopSession(libraryItemId)
-          withContext(Dispatchers.Main) {
-            player.stop()
-          }
-        }
-
-        return sessionResult(SessionResult.RESULT_SUCCESS)
-      }
-
-      return super.onCustomCommand(session, controller, customCommand, args)
-    }
-
-    private fun sessionResult(resultCode: Int): ListenableFuture<SessionResult> {
-      return Futures.immediateFuture(SessionResult(resultCode))
     }
   }
 
@@ -212,43 +152,7 @@ class AudioPlayerService : MediaSessionService() {
   }
 
   companion object {
-    private const val TAG = "AudioPlayerService"
-    private const val ACTION_PREPARE_SESSION = "prepareLibraryItem"
-    private const val ACTION_CLEAR_SESSION = "clearSession"
-    private const val EXTRA_LIBRARY_ITEM_ID = "libraryItemId"
-    private const val EXTRA_PLAY_IMMEDIATELY = "playWhenPrepared"
-    private const val EXTRA_CHAPTER_ID = "chapterId"
     private const val CHANNEL_ID = "app.campfire.notifications.playback"
     private const val NOTIFICATION_ID = 100
-
-    private const val UNSET_CHAPTER_ID = -1
-
-    fun start(
-      mediaController: MediaController,
-      libraryItemId: LibraryItemId,
-      playImmediately: Boolean,
-      chapterId: Int?,
-    ) {
-      mediaController.sendCustomCommand(
-        SessionCommand(ACTION_PREPARE_SESSION, Bundle.EMPTY),
-        bundleOf(
-          EXTRA_LIBRARY_ITEM_ID to libraryItemId,
-          EXTRA_PLAY_IMMEDIATELY to playImmediately,
-          EXTRA_CHAPTER_ID to (chapterId ?: UNSET_CHAPTER_ID),
-        ),
-      )
-    }
-
-    fun stopSession(
-      mediaController: MediaController,
-      libraryItemId: LibraryItemId,
-    ) {
-      mediaController.sendCustomCommand(
-        SessionCommand(ACTION_CLEAR_SESSION, Bundle.EMPTY),
-        bundleOf(
-          EXTRA_LIBRARY_ITEM_ID to libraryItemId,
-        ),
-      )
-    }
   }
 }

@@ -1,7 +1,9 @@
 package app.campfire.core.model
 
+typealias MediaProgressId = String
+
 data class MediaProgress(
-  val id: String,
+  val id: MediaProgressId,
   val userId: String,
   val libraryItemId: String,
   val episodeId: String? = null,
@@ -20,5 +22,9 @@ data class MediaProgress(
 ) {
 
   val actualProgress: Float
-    get() = currentTime / duration
+    get() = if (isFinished) 1f else currentTime / duration
+
+  companion object {
+    const val UNKNOWN_ID = "unknown_id"
+  }
 }

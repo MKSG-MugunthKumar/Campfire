@@ -54,6 +54,7 @@ import app.campfire.core.di.UserScope
 import app.campfire.core.extensions.seconds
 import app.campfire.core.model.Chapter
 import app.campfire.core.model.LibraryItem
+import app.campfire.core.model.MediaProgress
 import app.campfire.libraries.ui.detail.composables.AuthorNarratorBar
 import app.campfire.libraries.ui.detail.composables.ControlBar
 import app.campfire.libraries.ui.detail.composables.DurationListItem
@@ -123,6 +124,7 @@ fun LibraryItem(
       is LoadState.Loaded<out LibraryItem> -> LoadedState(
         item = contentState.data,
         seriesContentState = state.seriesContentState,
+        mediaProgressState = state.mediaProgressState,
         modifier = modifier,
         contentPadding = paddingValues,
         onChapterClick = { chapter ->
@@ -141,6 +143,10 @@ fun LibraryItem(
         onAddToCollection = {
         },
         onMarkFinished = {
+          state.eventSink(LibraryItemUiEvent.MarkFinished(contentState.data))
+        },
+        onMarkNotFinished = {
+          state.eventSink(LibraryItemUiEvent.MarkNotFinished(contentState.data))
         },
         onDiscardProgress = {
           state.eventSink(LibraryItemUiEvent.DiscardProgress(contentState.data))
@@ -154,10 +160,12 @@ fun LibraryItem(
 fun LoadedState(
   item: LibraryItem,
   seriesContentState: LoadState<out List<LibraryItem>>,
+  mediaProgressState: LoadState<out MediaProgress?>,
   onChapterClick: (Chapter) -> Unit,
   onPlayClick: () -> Unit,
   onDownloadClick: () -> Unit,
   onMarkFinished: () -> Unit,
+  onMarkNotFinished: () -> Unit,
   onDiscardProgress: () -> Unit,
   onAddToPlaylist: () -> Unit,
   onAddToCollection: () -> Unit,
@@ -240,22 +248,25 @@ fun LoadedState(
 
     Spacer(Modifier.height(24.dp))
 
-    item.userMediaProgress?.let { progress ->
-      Spacer(Modifier.height(16.dp))
-      MediaProgressBar(
-        progress = progress,
-        modifier = Modifier
-          .padding(horizontal = 20.dp),
-      )
-      Spacer(Modifier.height(16.dp))
+    mediaProgressState.onLoaded { mediaProgress ->
+      if (mediaProgress != null && mediaProgress.progress > 0f) {
+        Spacer(Modifier.height(16.dp))
+        MediaProgressBar(
+          progress = mediaProgress,
+          modifier = Modifier
+            .padding(horizontal = 20.dp),
+        )
+        Spacer(Modifier.height(16.dp))
+      }
     }
 
     ControlBar(
-      hasProgress = item.userMediaProgress != null,
+      mediaProgress = mediaProgressState.dataOrNull,
       isCurrentListening = false,
       onPlayClick = onPlayClick,
       onDownloadClick = onDownloadClick,
       onMarkFinished = onMarkFinished,
+      onMarkNotFinished = onMarkNotFinished,
       onDiscardProgress = onDiscardProgress,
       onAddToPlaylist = onAddToPlaylist,
       onAddToCollection = onAddToCollection,

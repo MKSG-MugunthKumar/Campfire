@@ -5,7 +5,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import app.campfire.account.api.ServerRepository
-import app.campfire.account.api.UserRepository
+import app.campfire.user.api.UserRepository
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import me.tatarka.inject.annotations.Inject

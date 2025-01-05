@@ -1,6 +1,5 @@
 package app.campfire.sessions.network
 
-import app.campfire.account.api.UserRepository
 import app.campfire.common.settings.CampfireSettings
 import app.campfire.core.app.ApplicationInfo
 import app.campfire.core.di.UserScope
@@ -10,6 +9,7 @@ import app.campfire.network.models.BookChapter
 import app.campfire.network.models.DeviceInfo
 import app.campfire.network.models.MinifiedBookMetadata
 import app.campfire.network.models.PlaybackSession
+import app.campfire.user.api.UserRepository
 import com.r0adkll.kimchi.annotations.ContributesBinding
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.DurationUnit
@@ -85,7 +85,7 @@ class DefaultNetworkSessionMapper(
       date = "", // This value is dumb, why send this AND startedAt
       dayOfWeek = "", // This value is dumb, why send this AND startedAt
       timeListening = session.timeListening.asSeconds(),
-      startTime = session.startTime.asSeconds(),
+      startTime = session.startedAt.toInstant(TimeZone.UTC).toEpochMilliseconds().milliseconds.asSeconds(),
       currentTime = session.currentTime.asSeconds(),
       startedAt = session.startedAt.toInstant(TimeZone.UTC).toEpochMilliseconds(),
       updatedAt = session.updatedAt.toInstant(TimeZone.UTC).toEpochMilliseconds(),

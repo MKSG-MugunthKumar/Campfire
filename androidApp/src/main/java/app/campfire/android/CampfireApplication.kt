@@ -13,6 +13,10 @@ class CampfireApplication : Application() {
     super.onCreate()
     Heartwood.grow(AndroidBark())
 
-    ComponentHolder.components += AndroidAppComponent.createAndroidAppComponent(this)
+    val component = AndroidAppComponent.createAndroidAppComponent(this).also {
+      ComponentHolder.components += it
+    }
+
+    component.startupInitializer.initialize()
   }
 }

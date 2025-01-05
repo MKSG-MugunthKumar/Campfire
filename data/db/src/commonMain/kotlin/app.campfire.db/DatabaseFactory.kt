@@ -2,6 +2,7 @@ package app.campfire.db
 
 import app.campfire.CampfireDatabase
 import app.campfire.data.Authors
+import app.campfire.data.Bookmarks
 import app.campfire.data.Library
 import app.campfire.data.LibraryItem
 import app.campfire.data.Media
@@ -83,12 +84,14 @@ class DatabaseFactory(
     sessionAdapter = Session.Adapter(
       idAdapter = UuidAdapter,
       playMethodAdapter = EnumColumnAdapter(),
-      durationAdapter = DurationAdapter,
       timeListeningAdapter = DurationAdapter,
-      startTimeAdapter = DurationAdapter,
       currentTimeAdapter = DurationAdapter,
       startedAtAdapter = LocalDateTimeAdapter,
       updatedAtAdapter = LocalDateTimeAdapter,
+    ),
+    bookmarksAdapter = Bookmarks.Adapter(
+      timeInSecondsAdapter = IntColumnAdapter,
+      createdAtAdapter = LocalDateTimeAdapter,
     ),
   )
 }

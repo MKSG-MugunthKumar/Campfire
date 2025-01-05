@@ -1,9 +1,10 @@
 package app.campfire.network
 
 import app.campfire.account.api.AccountManager
-import app.campfire.common.settings.CampfireSettings
+import app.campfire.account.api.UserSessionManager
 import app.campfire.core.coroutines.DispatcherProvider
 import app.campfire.core.di.AppScope
+import app.campfire.core.session.serverUrl
 import app.campfire.network.envelopes.AllLibrariesResponse
 import app.campfire.network.envelopes.AuthorResponse
 import app.campfire.network.envelopes.CollectionsResponse
@@ -19,10 +20,13 @@ import app.campfire.network.models.Collection
 import app.campfire.network.models.Library
 import app.campfire.network.models.LibraryItemExpanded
 import app.campfire.network.models.LibraryItemMinified
+import app.campfire.network.models.MediaProgress
 import app.campfire.network.models.MinifiedBookMetadata
+import app.campfire.network.models.NetworkModel
 import app.campfire.network.models.PlaybackSession
 import app.campfire.network.models.Series
 import app.campfire.network.models.Shelf
+import app.campfire.network.models.User
 import com.r0adkll.kimchi.annotations.ContributesBinding
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -55,8 +59,8 @@ import me.tatarka.inject.annotations.Inject
 @ContributesBinding(AppScope::class)
 class KtorAudioBookShelfApi(
   private val httpClient: HttpClient,
-  private val settings: CampfireSettings,
   private val accountManager: AccountManager,
+  private val userSessionManager: UserSessionManager,
   private val dispatcherProvider: DispatcherProvider,
 ) : AudioBookShelfApi {
 
@@ -87,6 +91,10 @@ class KtorAudioBookShelfApi(
       contentType(ContentType.Application.Json)
       setBody(LoginRequest(username, password))
     }
+  }
+
+  override suspend fun getCurrentUser(): Result<User> = trySendRequest {
+    hydratedClientRequest("/api/me")
   }
 
   override suspend fun getAllLibraries(): Result<List<Library>> = trySendRequest<AllLibrariesResponse> {
@@ -145,6 +153,12 @@ class KtorAudioBookShelfApi(
     }.map { it.results }
   }
 
+  override suspend fun getMediaProgress(libraryItemId: String): Result<MediaProgress> {
+    return trySendRequest {
+      hydratedClientRequest("/api/me/progress/$libraryItemId")
+    }
+  }
+
   override suspend fun updateMediaProgress(libraryItemId: String, update: MediaProgressUpdatePayload): Result<Unit> {
     return trySendRequest({}) {
       hydratedClientRequest("/api/me/progress/$libraryItemId") {
@@ -154,9 +168,18 @@ class KtorAudioBookShelfApi(
     }
   }
 
-  override suspend fun deleteMediaProgress(libraryItemId: String): Result<Unit> {
+  override suspend fun batchUpdateMediaProgress(updates: List<MediaProgressUpdatePayload>): Result<Unit> {
     return trySendRequest({}) {
-      hydratedClientRequest("/api/me/progress/$libraryItemId") {
+      hydratedClientRequest("/api/me/progress/batch/update") {
+        method = HttpMethod.Patch
+        setBody(updates)
+      }
+    }
+  }
+
+  override suspend fun deleteMediaProgress(mediaProgressId: String): Result<Unit> {
+    return trySendRequest({}) {
+      hydratedClientRequest("/api/me/progress/$mediaProgressId") {
         method = HttpMethod.Delete
       }
     }
@@ -191,7 +214,12 @@ class KtorAudioBookShelfApi(
     try {
       val response = request()
       if (response.status.isSuccess()) {
-        Result.success(responseMapper(response))
+        val originServerUrl = response.call.request.headers[HEADER_SERVER_URL]
+        val body = responseMapper(response)
+        if (body is NetworkModel && originServerUrl != null) {
+          body.origin = RequestOrigin.Url(originServerUrl)
+        }
+        Result.success(body)
       } else {
         Result.failure(ApiException(response.status.value, response.bodyAsText()))
       }
@@ -205,13 +233,14 @@ class KtorAudioBookShelfApi(
     endpoint: String,
     builder: HttpRequestBuilder.() -> Unit = { },
   ): HttpResponse {
-    val currentServerUrl = settings.currentServerUrl
+    val currentServerUrl = userSessionManager.current.serverUrl
       ?: throw IllegalStateException("You must be logged in to perform this request")
     val token = accountManager.getToken(currentServerUrl)
       ?: throw IllegalStateException("No authentication found for the url $currentServerUrl")
     return client.request {
       url("${cleanServerUrl(currentServerUrl)}${if (!endpoint.startsWith("/")) "/" else ""}$endpoint")
       header(HttpHeaders.Authorization, "Bearer $token")
+      header(HEADER_SERVER_URL, currentServerUrl)
       contentType(ContentType.Application.Json)
       builder()
     }
@@ -221,7 +250,7 @@ class KtorAudioBookShelfApi(
     urlBuilder: URLBuilder.() -> Unit,
     builder: HttpRequestBuilder.() -> Unit = { },
   ): HttpResponse {
-    val currentServerUrl = settings.currentServerUrl
+    val currentServerUrl = userSessionManager.current.serverUrl
       ?: throw IllegalStateException("You must be logged in to perform this request")
     val token = accountManager.getToken(currentServerUrl)
       ?: throw IllegalStateException("No authentication found for the url $currentServerUrl")
@@ -231,6 +260,7 @@ class KtorAudioBookShelfApi(
         urlBuilder()
       }
       header(HttpHeaders.Authorization, "Bearer $token")
+      header(HEADER_SERVER_URL, currentServerUrl)
       contentType(ContentType.Application.Json)
       builder()
     }
@@ -248,5 +278,9 @@ class KtorAudioBookShelfApi(
     } else {
       "https://${url.withoutFinalSlash()}"
     }
+  }
+
+  companion object {
+    private const val HEADER_SERVER_URL = "X-Server-Url"
   }
 }

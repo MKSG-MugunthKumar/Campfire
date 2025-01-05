@@ -15,13 +15,13 @@ import app.campfire.data.Media as DatabaseMedia
 import app.campfire.data.MediaAudioFiles
 import app.campfire.data.MediaAudioTracks
 import app.campfire.data.MediaChapters
-import app.campfire.data.MediaProgress as DbMediaProgress
 import app.campfire.data.MetadataAuthor
 import app.campfire.data.SelectForAuthorName
 import app.campfire.data.SelectForCollection
 import app.campfire.data.SelectForId
 import app.campfire.data.SelectForLibrary
 import app.campfire.data.SelectForSeries
+import app.campfire.network.RequestOrigin
 import app.campfire.network.models.ExpandedBookMetadata
 import app.campfire.network.models.LibraryItemBase
 import app.campfire.network.models.Media
@@ -32,7 +32,7 @@ import app.campfire.network.models.MinifiedBookMetadata
 import kotlin.time.Duration.Companion.seconds
 
 fun LibraryItemBase.asDbModel(
-  serverUrl: String,
+  serverUrl: String? = null,
 ): DatabaseLibraryItem {
   return DatabaseLibraryItem(
     id = id,
@@ -56,7 +56,7 @@ fun LibraryItemBase.asDbModel(
     },
     numFiles = numFiles ?: -1,
     size = size,
-    serverUrl = serverUrl,
+    serverUrl = serverUrl ?: (origin as RequestOrigin.Url).serverUrl,
   )
 }
 
@@ -356,7 +356,6 @@ suspend fun SelectForId.asDomainModel(
   mediaAudioFiles: List<MediaAudioFiles>,
   mediaAudioTracks: List<MediaAudioTracks>,
   mediaChapters: List<MediaChapters>,
-  mediaProgress: DbMediaProgress?,
   metadataAuthors: List<MetadataAuthor>,
 ): LibraryItem {
   return LibraryItem(
@@ -475,6 +474,6 @@ suspend fun SelectForId.asDomainModel(
       sizeInBytes = sizeInBytes,
       ebookFormat = ebookFormat,
     ),
-    userMediaProgress = mediaProgress?.asDomainModel(),
+    userMediaProgress = null,
   )
 }

@@ -1,23 +1,23 @@
 package app.campfire.home
 
 import app.campfire.account.api.CoverImageHydrator
-import app.campfire.account.api.UserRepository
 import app.campfire.core.coroutines.DispatcherProvider
 import app.campfire.core.di.SingleIn
 import app.campfire.core.di.UserScope
 import app.campfire.core.session.UserSession
+import app.campfire.core.session.serverUrl
 import app.campfire.home.api.HomeRepository
 import app.campfire.home.api.model.Shelf
 import app.campfire.home.mapping.asDomainModel
 import app.campfire.home.progress.MediaProgressDataSource
 import app.campfire.network.AudioBookShelfApi
+import app.campfire.user.api.UserRepository
 import com.r0adkll.kimchi.annotations.ContributesBinding
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import me.tatarka.inject.annotations.Inject
 
