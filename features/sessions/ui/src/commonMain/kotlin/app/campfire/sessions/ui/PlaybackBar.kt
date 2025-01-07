@@ -139,6 +139,9 @@ fun PlaybackBar(
               onChapterSelected = { chapter ->
                 audioPlayer?.seekTo(chapter.id)
               },
+              onBookmarkSelected = { bookmark ->
+                audioPlayer?.seekTo(bookmark.time)
+              },
             )
           }
         }

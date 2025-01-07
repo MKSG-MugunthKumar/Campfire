@@ -6,7 +6,6 @@ import app.campfire.network.models.AudioBookmark as NetworkBookmark
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
 
 fun NetworkBookmark.asDbModel(userId: String): DbBookmark {
@@ -15,6 +14,16 @@ fun NetworkBookmark.asDbModel(userId: String): DbBookmark {
     libraryItemId = libraryItemId,
     title = title,
     timeInSeconds = time,
+    createdAt = Instant.fromEpochSeconds(createdAt).toLocalDateTime(TimeZone.UTC),
+  )
+}
+
+fun NetworkBookmark.asDomainModel(userId: String): Bookmark {
+  return Bookmark(
+    userId = userId,
+    libraryItemId = libraryItemId,
+    title = title,
+    time = time.seconds,
     createdAt = Instant.fromEpochSeconds(createdAt).toLocalDateTime(TimeZone.UTC),
   )
 }
@@ -29,11 +38,12 @@ fun DbBookmark.asDomainModel(): Bookmark {
   )
 }
 
-fun Bookmark.asNetworkModel(): NetworkBookmark {
-  return NetworkBookmark(
+fun Bookmark.asDbModel(): DbBookmark {
+  return DbBookmark(
+    userId = userId,
     libraryItemId = libraryItemId,
     title = title,
-    time = time.inWholeSeconds.toInt(),
-    createdAt = createdAt.toInstant(TimeZone.UTC).toEpochMilliseconds(),
+    timeInSeconds = time.inWholeSeconds.toInt(),
+    createdAt = createdAt,
   )
 }
