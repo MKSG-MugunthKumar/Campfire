@@ -4,7 +4,7 @@
     "config:recommended"
   ],
   "baseBranches": [
-    "modern"
+    "main"
   ],
   "assignees": [
     "r0adkll"
