@@ -282,6 +282,7 @@ internal fun ExpandedPlaybackBar(
           verticalArrangement = Arrangement.Center,
           horizontalAlignment = Alignment.CenterHorizontally,
         ) {
+          // TODO: Extract this composable
           Box(
             contentAlignment = Alignment.Center,
           ) {
@@ -331,7 +332,7 @@ internal fun ExpandedPlaybackBar(
           Spacer(Modifier.height(16.dp))
 
           Text(
-            text = currentMetadata.title ?: "--",
+            text = currentMetadata.title ?: session.title,
             textAlign = TextAlign.Center,
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.SemiBold,
@@ -437,14 +438,13 @@ private fun PlaybackSeekBar(
   fun calculateProgress(): Float = if (currentDuration.inWholeMilliseconds == 0L) {
     0f
   } else {
-    currentTime.inWholeMilliseconds.toFloat() /
-      currentDuration.inWholeMilliseconds.toFloat()
+    (currentTime / currentDuration).toFloat()
   }
 
   var sliderValue by remember { mutableStateOf(calculateProgress()) }
   val softSliderValue by animateFloatAsState(sliderValue)
   LaunchedEffect(isInteracting, state, currentTime, currentDuration) {
-    if (!isInteracting && state == AudioPlayer.State.Playing) {
+    if (!isInteracting) {
       sliderValue = calculateProgress()
     }
   }
