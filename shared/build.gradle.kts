@@ -47,6 +47,9 @@ kotlin {
         api(projects.features.sessions.impl)
         api(projects.features.sessions.ui)
 
+        api(projects.features.search.impl)
+        api(projects.features.search.ui)
+
         api(projects.ui.drawer)
         api(projects.ui.settings)
 
@@ -54,6 +57,7 @@ kotlin {
         api(compose.foundation)
         api(compose.material)
         api(compose.material3)
+        api(compose.material3AdaptiveNavigationSuite)
         api(compose.materialIconsExtended)
         @OptIn(org.jetbrains.compose.ExperimentalComposeLibrary::class)
         api(compose.components.resources)

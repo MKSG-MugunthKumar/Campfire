@@ -18,9 +18,8 @@ import app.campfire.data.MediaChapters
 import app.campfire.data.MetadataAuthor
 import app.campfire.data.SelectForAuthorName
 import app.campfire.data.SelectForCollection
-import app.campfire.data.SelectForId
-import app.campfire.data.SelectForLibrary
 import app.campfire.data.SelectForSeries
+import app.campfire.data.mapping.model.LibraryItemWithMedia
 import app.campfire.network.RequestOrigin
 import app.campfire.network.models.ExpandedBookMetadata
 import app.campfire.network.models.LibraryItemBase
@@ -55,7 +54,7 @@ fun LibraryItemBase.asDbModel(
       NetworkMediaType.Podcast -> DomainMediaType.Podcast
     },
     numFiles = numFiles ?: -1,
-    size = size,
+    size = size ?: -1,
     serverUrl = serverUrl ?: (origin as RequestOrigin.Url).serverUrl,
   )
 }
@@ -69,8 +68,15 @@ fun <T : Media> T.asDbModel(
     else -> error("Unknown media metadata")
   }
 
+  val metadataAuthorName = metadata.authorName
+    ?: (metadata as? ExpandedBookMetadata)?.authors?.firstOrNull()?.name
+
+  val metadataAuthorNameLF = metadata.authorNameLF
+    ?: (metadata as? ExpandedBookMetadata)?.authors?.firstOrNull()?.name?.lastFirst
+
   val metadataSeries = (metadata as? MinifiedBookMetadata)?.series
     ?: (metadata as? ExpandedBookMetadata)?.series?.firstOrNull()
+
   return DatabaseMedia(
     libraryItemId = libraryItemId,
 
@@ -82,8 +88,22 @@ fun <T : Media> T.asDbModel(
     numChapters = numChapters,
     numMissingParts = numMissingParts,
     numInvalidAudioFiles = numInvalidAudioFiles,
-    durationInMillis = duration.seconds.inWholeMilliseconds,
-    sizeInBytes = size,
+    durationInMillis = duration?.seconds?.inWholeMilliseconds ?: run {
+      // We've hit an odd response from the API, so we need to compute this on the fly
+      val computedDuration = (this as? MediaExpanded)?.let {
+        it.audioFiles
+          .sumOf { it.duration.toDouble() }
+          .seconds
+      } ?: error("Unable to compute duration, breaking to debug")
+      computedDuration.inWholeMilliseconds
+    },
+    sizeInBytes = size ?: run {
+      (this as? MediaExpanded)?.let {
+        it.audioFiles
+          .sumOf { it.metadata.size }
+          .toLong()
+      } ?: error("Unable to compute size, breaking to debug")
+    },
     propertySize = propertySize,
     ebookFormat = ebookFormat,
 
@@ -100,8 +120,8 @@ fun <T : Media> T.asDbModel(
     metadata_explicit = metadata.explicit,
     metadata_abridged = metadata.abridged,
     metadata_titleIgnorePrefix = metadata.titleIgnorePrefix,
-    metadata_authorName = metadata.authorName,
-    metadata_authorNameLF = metadata.authorNameLF,
+    metadata_authorName = metadataAuthorName,
+    metadata_authorNameLF = metadataAuthorNameLF,
     metadata_narratorName = metadata.narratorName,
     metadata_seriesName = metadata.seriesName,
 
@@ -111,64 +131,15 @@ fun <T : Media> T.asDbModel(
   )
 }
 
-suspend fun SelectForLibrary.asDomainModel(
-  coverImageHydrator: CoverImageHydrator,
-): LibraryItem {
-  return LibraryItem(
-    id = id,
-    libraryId = libraryId,
-    isMissing = isMissing,
-    isInvalid = isInvalid,
-    mediaType = mediaType,
-    numFiles = numFiles,
-    sizeInBytes = sizeInBytes,
-    addedAtMillis = addedAt,
-    updatedAtMillis = updatedAt,
-    media = DomainMedia(
-      id = mediaId,
-      metadata = DomainMedia.Metadata(
-        title = metadata_title,
-        titleIgnorePrefix = metadata_titleIgnorePrefix,
-        subtitle = metadata_subtitle,
-        authorName = metadata_authorName,
-        authorNameLastFirst = metadata_authorNameLF,
-        narratorName = metadata_narratorName,
-        seriesName = metadata_seriesName,
-        genres = metadata_genres ?: emptyList(),
-        publishedYear = metadata_publishedYear,
-        publishedDate = metadata_publishedDate,
-        publisher = metadata_publisher,
-        description = metadata_description,
-        ISBN = metadata_isbn,
-        ASIN = metadata_asin,
-        language = metadata_language,
-        isExplicit = metadata_explicit,
-        isAbridged = metadata_abridged,
-        seriesSequence = createIfNotNull(
-          metadata_series_id,
-          metadata_series_name,
-          metadata_series_sequence,
-        ) {
-          SeriesSequence(
-            id = metadata_series_id!!,
-            name = metadata_series_name!!,
-            sequence = metadata_series_sequence!!,
-          )
-        },
-      ),
-      coverImageUrl = coverImageHydrator.hydrateLibraryItem(id),
-      coverPath = coverPath,
-      tags = tags ?: emptyList(),
-      numTracks = numTracks,
-      numAudioFiles = numAudioFiles,
-      numChapters = numChapters,
-      numMissingParts = numMissingParts,
-      numInvalidAudioFiles = numInvalidAudioFiles,
-      durationInMillis = durationInMillis,
-      sizeInBytes = sizeInBytes,
-      ebookFormat = ebookFormat,
-    ),
-  )
+private val String.lastFirst: String get() {
+  val parts = split(" ")
+  return if (parts.size > 1) {
+    val firstName = parts.subList(0, parts.lastIndex).joinToString(" ")
+    val lastName = parts.last()
+    "$lastName, $firstName"
+  } else {
+    this
+  }
 }
 
 suspend fun SelectForSeries.asDomainModel(
@@ -351,12 +322,12 @@ suspend fun SelectForAuthorName.asDomainModel(
   )
 }
 
-suspend fun SelectForId.asDomainModel(
+suspend fun LibraryItemWithMedia.asDomainModel(
   coverImageHydrator: CoverImageHydrator,
-  mediaAudioFiles: List<MediaAudioFiles>,
-  mediaAudioTracks: List<MediaAudioTracks>,
-  mediaChapters: List<MediaChapters>,
-  metadataAuthors: List<MetadataAuthor>,
+  mediaAudioFiles: List<MediaAudioFiles> = emptyList(),
+  mediaAudioTracks: List<MediaAudioTracks> = emptyList(),
+  mediaChapters: List<MediaChapters> = emptyList(),
+  metadataAuthors: List<MetadataAuthor> = emptyList(),
 ): LibraryItem {
   return LibraryItem(
     id = id,
@@ -374,8 +345,8 @@ suspend fun SelectForId.asDomainModel(
         title = metadata_title,
         titleIgnorePrefix = metadata_titleIgnorePrefix,
         subtitle = metadata_subtitle,
-        authorName = metadata_authorName,
-        authorNameLastFirst = metadata_authorNameLF,
+        authorName = metadata_authorName ?: metadataAuthors.firstOrNull()?.name,
+        authorNameLastFirst = metadata_authorNameLF ?: metadataAuthors.firstOrNull()?.name?.lastFirst,
         narratorName = metadata_narratorName,
         seriesName = metadata_seriesName,
         genres = metadata_genres ?: emptyList(),
