@@ -5,8 +5,8 @@ import kotlin.String;
 import kotlin.collections.List;
 
 CREATE TABLE IF NOT EXISTS server (
-  url TEXT NOT NULL,
-  userId TEXT NOT NULL,
+  url TEXT NOT NULL PRIMARY KEY,
+  userId TEXT NOT NULL UNIQUE,
   name TEXT NOT NULL,
   tent TEXT AS Tent NOT NULL,
   scannerFindCovers INTEGER AS Boolean NOT NULL DEFAULT 0,
@@ -33,10 +33,7 @@ CREATE TABLE IF NOT EXISTS server (
   timeFormat TEXT NOT NULL,
   language TEXT NOT NULL,
   logLevel INTEGER AS Int NOT NULL DEFAULT 0,
-  version TEXT NOT NULL,
-
-  PRIMARY KEY (url, userId),
-  FOREIGN KEY (userId) REFERENCES user(id) ON DELETE CASCADE
+  version TEXT NOT NULL
 );
 
 selectAll:
