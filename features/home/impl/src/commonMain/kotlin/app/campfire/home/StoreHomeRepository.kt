@@ -1,6 +1,6 @@
 package app.campfire.home
 
-import app.campfire.account.api.CoverImageHydrator
+import app.campfire.account.api.TokenHydrator
 import app.campfire.core.coroutines.DispatcherProvider
 import app.campfire.core.di.SingleIn
 import app.campfire.core.di.UserScope
@@ -28,7 +28,7 @@ class StoreHomeRepository(
   private val userSession: UserSession,
   private val api: AudioBookShelfApi,
   private val userRepository: UserRepository,
-  private val imageHydrator: CoverImageHydrator,
+  private val imageHydrator: TokenHydrator,
   private val mediaProgressDataSource: MediaProgressDataSource,
   private val dispatcherProvider: DispatcherProvider,
 ) : HomeRepository {

@@ -1,7 +1,7 @@
 package app.campfire.collections
 
 import app.campfire.CampfireDatabase
-import app.campfire.account.api.CoverImageHydrator
+import app.campfire.account.api.TokenHydrator
 import app.campfire.collections.api.CollectionsRepository
 import app.campfire.core.coroutines.DispatcherProvider
 import app.campfire.core.di.SingleIn
@@ -44,7 +44,7 @@ class StoreCollectionsRepository(
   private val userRepository: UserRepository,
   private val api: AudioBookShelfApi,
   private val db: CampfireDatabase,
-  private val coverImageHydrator: CoverImageHydrator,
+  private val tokenHydrator: TokenHydrator,
   private val dispatcherProvider: DispatcherProvider,
 ) : CollectionsRepository {
 
@@ -108,7 +108,7 @@ class StoreCollectionsRepository(
           .mapNotNull { response ->
             response.dataOrNull()?.let { collections ->
               collections.entries.map { (c, books) ->
-                c.asDomainModel(books.map { it.asDomainModel(coverImageHydrator) })
+                c.asDomainModel(books.map { it.asDomainModel(tokenHydrator) })
               }
             }
           }
@@ -123,7 +123,7 @@ class StoreCollectionsRepository(
       .mapToList(dispatcherProvider.databaseRead)
       .mapLatest { selectForCollection ->
         selectForCollection
-          .map { it.asDomainModel(coverImageHydrator) }
+          .map { it.asDomainModel(tokenHydrator) }
       }
   }
 }

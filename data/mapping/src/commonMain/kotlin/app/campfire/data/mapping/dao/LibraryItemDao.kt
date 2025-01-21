@@ -1,7 +1,7 @@
 package app.campfire.data.mapping.dao
 
 import app.campfire.CampfireDatabase
-import app.campfire.account.api.CoverImageHydrator
+import app.campfire.account.api.TokenHydrator
 import app.campfire.core.coroutines.DispatcherProvider
 import app.campfire.core.di.UserScope
 import app.campfire.core.logging.LogPriority
@@ -52,7 +52,7 @@ interface LibraryItemDao {
 @Inject
 class SqlDelightLibraryItemDao(
   private val db: CampfireDatabase,
-  private val coverImageHydrator: CoverImageHydrator,
+  private val tokenHydrator: TokenHydrator,
   private val dispatcherProvider: DispatcherProvider,
 ) : LibraryItemDao {
 
@@ -80,7 +80,7 @@ class SqlDelightLibraryItemDao(
     }
 
     item.asDomainModel(
-      coverImageHydrator,
+      tokenHydrator,
       audioFiles,
       audioTracks,
       chapters,

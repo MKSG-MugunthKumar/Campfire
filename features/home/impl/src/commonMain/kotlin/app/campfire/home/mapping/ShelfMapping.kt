@@ -1,6 +1,6 @@
 package app.campfire.home.mapping
 
-import app.campfire.account.api.CoverImageHydrator
+import app.campfire.account.api.TokenHydrator
 import app.campfire.core.model.Author as DomainAuthor
 import app.campfire.core.model.LibraryItem
 import app.campfire.core.model.Media
@@ -19,7 +19,7 @@ import app.campfire.network.models.Shelf as NetworkShelf
 import kotlin.time.Duration.Companion.seconds
 
 suspend fun NetworkShelf.asDomainModel(
-  imageHydrator: CoverImageHydrator,
+  imageHydrator: TokenHydrator,
   mediaProgressDataSource: MediaProgressDataSource,
 ): DomainShelf<*> {
   return DomainShelf(
@@ -37,7 +37,7 @@ suspend fun NetworkShelf.asDomainModel(
 }
 
 suspend fun LibraryItemMinified<*>.asDomainModel(
-  imageHydrator: CoverImageHydrator,
+  imageHydrator: TokenHydrator,
   mediaProgressDataSource: MediaProgressDataSource,
 ): LibraryItem {
   return LibraryItem(
@@ -100,7 +100,7 @@ suspend fun LibraryItemMinified<*>.asDomainModel(
 }
 
 suspend fun SeriesPersonalized.asDomainModel(
-  imageHydrator: CoverImageHydrator,
+  imageHydrator: TokenHydrator,
   mediaProgressDataSource: MediaProgressDataSource,
 ): Series {
   return Series(
@@ -119,7 +119,7 @@ suspend fun SeriesPersonalized.asDomainModel(
 }
 
 suspend fun NetworkAuthor.asDomainModel(
-  imageHydrator: CoverImageHydrator,
+  imageHydrator: TokenHydrator,
 ): DomainAuthor {
   return DomainAuthor(
     id = id,

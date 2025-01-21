@@ -1,6 +1,6 @@
 package app.campfire.data.mapping
 
-import app.campfire.account.api.CoverImageHydrator
+import app.campfire.account.api.TokenHydrator
 import app.campfire.core.model.AudioFile
 import app.campfire.core.model.AudioTrack
 import app.campfire.core.model.Chapter
@@ -143,7 +143,7 @@ private val String.lastFirst: String get() {
 }
 
 suspend fun SelectForSeries.asDomainModel(
-  coverImageHydrator: CoverImageHydrator,
+  tokenHydrator: TokenHydrator,
 ): LibraryItem {
   return LibraryItem(
     id = id,
@@ -187,7 +187,7 @@ suspend fun SelectForSeries.asDomainModel(
           )
         },
       ),
-      coverImageUrl = coverImageHydrator.hydrateLibraryItem(id),
+      coverImageUrl = tokenHydrator.hydrateLibraryItem(id),
       coverPath = coverPath,
       tags = tags ?: emptyList(),
       numTracks = numTracks,
@@ -203,7 +203,7 @@ suspend fun SelectForSeries.asDomainModel(
 }
 
 suspend fun SelectForCollection.asDomainModel(
-  coverImageHydrator: CoverImageHydrator,
+  tokenHydrator: TokenHydrator,
 ): LibraryItem {
   return LibraryItem(
     id = id,
@@ -247,7 +247,7 @@ suspend fun SelectForCollection.asDomainModel(
           )
         },
       ),
-      coverImageUrl = coverImageHydrator.hydrateLibraryItem(id),
+      coverImageUrl = tokenHydrator.hydrateLibraryItem(id),
       coverPath = coverPath,
       tags = tags ?: emptyList(),
       numTracks = numTracks,
@@ -263,7 +263,7 @@ suspend fun SelectForCollection.asDomainModel(
 }
 
 suspend fun SelectForAuthorName.asDomainModel(
-  coverImageHydrator: CoverImageHydrator,
+  tokenHydrator: TokenHydrator,
 ): LibraryItem {
   return LibraryItem(
     id = id,
@@ -307,7 +307,7 @@ suspend fun SelectForAuthorName.asDomainModel(
           )
         },
       ),
-      coverImageUrl = coverImageHydrator.hydrateLibraryItem(id),
+      coverImageUrl = tokenHydrator.hydrateLibraryItem(id),
       coverPath = coverPath,
       tags = tags ?: emptyList(),
       numTracks = numTracks,
@@ -323,7 +323,7 @@ suspend fun SelectForAuthorName.asDomainModel(
 }
 
 suspend fun LibraryItemWithMedia.asDomainModel(
-  coverImageHydrator: CoverImageHydrator,
+  tokenHydrator: TokenHydrator,
   mediaAudioFiles: List<MediaAudioFiles> = emptyList(),
   mediaAudioTracks: List<MediaAudioTracks> = emptyList(),
   mediaChapters: List<MediaChapters> = emptyList(),
@@ -417,14 +417,14 @@ suspend fun LibraryItemWithMedia.asDomainModel(
           startOffset = it.startOffset.toFloat(),
           duration = it.duration.toFloat(),
           title = it.title,
-          contentUrl = coverImageHydrator.hydrateUrl(it.contentUrl),
-          contentUrlWithToken = coverImageHydrator.hydrateUrlWithToken(it.contentUrl),
+          contentUrl = tokenHydrator.hydrateUrl(it.contentUrl),
+          contentUrlWithToken = tokenHydrator.hydrateUrlWithToken(it.contentUrl),
           mimeType = it.mimeType,
           codec = it.codec,
           metadata = FileMetadata(
             filename = it.metadata_filename,
             ext = it.metadata_ext,
-            path = coverImageHydrator.hydrateUrl(it.metadata_path),
+            path = tokenHydrator.hydrateUrl(it.metadata_path),
             relPath = it.metadata_relPath,
             size = it.metadata_size,
             mtimeMs = it.metadata_mtimeMs,
@@ -433,7 +433,7 @@ suspend fun LibraryItemWithMedia.asDomainModel(
           ),
         )
       },
-      coverImageUrl = coverImageHydrator.hydrateLibraryItem(id),
+      coverImageUrl = tokenHydrator.hydrateLibraryItem(id),
       coverPath = coverPath,
       tags = tags ?: emptyList(),
       numTracks = numTracks,

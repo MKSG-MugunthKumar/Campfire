@@ -1,7 +1,7 @@
 package app.campfire.search.store
 
 import app.campfire.CampfireDatabase
-import app.campfire.account.api.CoverImageHydrator
+import app.campfire.account.api.TokenHydrator
 import app.campfire.core.coroutines.DispatcherProvider
 import app.campfire.core.logging.bark
 import app.campfire.data.Search
@@ -34,7 +34,7 @@ import org.mobilenativefoundation.store.store5.SourceOfTruth
 class SearchSourceOfTruthFactory(
   private val db: CampfireDatabase,
   private val libraryItemDao: LibraryItemDao,
-  private val coverImageHydrator: CoverImageHydrator,
+  private val tokenHydrator: TokenHydrator,
   private val dispatcherProvider: DispatcherProvider,
 ) {
 
@@ -164,7 +164,7 @@ class SearchSourceOfTruthFactory(
       transactionWithResult {
         db.authorsQueries.transaction {
           authors.forEach { author ->
-            db.authorsQueries.insert(author.asDbModel(coverImageHydrator))
+            db.authorsQueries.insert(author.asDbModel(tokenHydrator))
           }
         }
       }

@@ -1,7 +1,7 @@
 package app.campfire.author.store
 
 import app.campfire.CampfireDatabase
-import app.campfire.account.api.CoverImageHydrator
+import app.campfire.account.api.TokenHydrator
 import app.campfire.core.coroutines.DispatcherProvider
 import app.campfire.core.di.SingleIn
 import app.campfire.core.di.UserScope
@@ -41,7 +41,7 @@ interface AuthorDetailStoreModule {
     userSession: UserSession,
     api: AudioBookShelfApi,
     db: CampfireDatabase,
-    coverImageHydrator: CoverImageHydrator,
+    tokenHydrator: TokenHydrator,
     dispatcherProvider: DispatcherProvider,
   ): AuthorDetailStore {
     return StoreBuilder
@@ -59,14 +59,14 @@ interface AuthorDetailStoreModule {
                   .mapToList(dispatcherProvider.databaseRead)
                   .map { libraryItems ->
                     val items = libraryItems
-                      .map { it.asDomainModel(coverImageHydrator) }
+                      .map { it.asDomainModel(tokenHydrator) }
                       .sortedBy { it.media.metadata.publishedYear?.toIntOrNull() }
                     author.asDomainModel(items)
                   }
               }
           },
           writer = { authorId, author ->
-            val authorDbModel = author.asDbModel(coverImageHydrator)
+            val authorDbModel = author.asDbModel(tokenHydrator)
             withContext(dispatcherProvider.databaseWrite) {
               db.transaction {
                 db.authorsQueries.insert(authorDbModel)

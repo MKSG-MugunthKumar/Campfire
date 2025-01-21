@@ -3,7 +3,7 @@ package app.campfire.account.api
 import app.campfire.core.model.AuthorId
 import app.campfire.core.model.LibraryItemId
 
-interface CoverImageHydrator {
+interface TokenHydrator {
 
   fun hydrateUrl(absolutePath: String): String
   suspend fun hydrateUrlWithToken(absolutePath: String): String

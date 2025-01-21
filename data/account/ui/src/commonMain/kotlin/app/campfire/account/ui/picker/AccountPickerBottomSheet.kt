@@ -289,7 +289,6 @@ private fun AccountListItem(
     },
     supportingContent = { Text(server.url) },
     trailingContent = {
-      // TODO: We should add a confirmation state here similar to bookmark deletions
       IconButton(onClick = onLogout) {
         Icon(Icons.AutoMirrored.Rounded.Logout, contentDescription = null)
       }
