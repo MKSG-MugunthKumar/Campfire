@@ -19,6 +19,7 @@ data class LoginUiState(
 ) : CircuitUiState
 
 sealed interface LoginUiEvent : CircuitUiEvent {
+  data object NavigateBack : LoginUiEvent
   data class ChangeTent(val tent: Tent) : LoginUiEvent
   data class ServerName(val serverName: String) : LoginUiEvent
   data class ServerUrl(val url: String) : LoginUiEvent

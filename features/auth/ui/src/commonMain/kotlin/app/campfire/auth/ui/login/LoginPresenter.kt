@@ -11,6 +11,7 @@ import app.campfire.auth.api.AuthRepository
 import app.campfire.auth.ui.BuildConfig
 import app.campfire.auth.ui.login.LoginUiEvent.AddCampsite
 import app.campfire.auth.ui.login.LoginUiEvent.ChangeTent
+import app.campfire.auth.ui.login.LoginUiEvent.NavigateBack
 import app.campfire.auth.ui.login.LoginUiEvent.Password
 import app.campfire.auth.ui.login.LoginUiEvent.ServerName
 import app.campfire.auth.ui.login.LoginUiEvent.ServerUrl
@@ -70,6 +71,8 @@ class LoginPresenter(
       connectionState = connectionState,
     ) { event ->
       when (event) {
+        NavigateBack -> navigator.pop()
+
         is ChangeTent -> tent = event.tent
         is UserName -> username = event.userName
         is Password -> password = event.password

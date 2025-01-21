@@ -12,12 +12,17 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -41,19 +46,25 @@ import org.jetbrains.compose.resources.stringResource
 @CircuitInject(LoginScreen::class, UserScope::class)
 @Composable
 fun Login(
+  screen: LoginScreen,
   state: LoginUiState,
   modifier: Modifier = Modifier,
 ) {
   CampfireTheme(
     tent = state.tent,
   ) {
-    LoginContent(state, modifier)
+    LoginContent(
+      state = state,
+      isAddingAccount = screen.isAddingAccount,
+      modifier = modifier,
+    )
   }
 }
 
 @Composable
 private fun LoginContent(
   state: LoginUiState,
+  isAddingAccount: Boolean,
   modifier: Modifier = Modifier,
 ) {
   val eventSink = state.eventSink
@@ -72,6 +83,20 @@ private fun LoginContent(
             vertical = 48.dp,
           ),
       )
+
+      if (isAddingAccount) {
+        TopAppBar(
+          title = {},
+          navigationIcon = {
+            IconButton(
+              onClick = { state.eventSink(LoginUiEvent.NavigateBack) },
+            ) {
+              Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = null)
+            }
+          },
+          colors = TopAppBarDefaults.topAppBarColors(),
+        )
+      }
 
       Column(
         modifier = Modifier

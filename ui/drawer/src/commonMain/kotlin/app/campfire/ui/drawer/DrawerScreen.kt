@@ -92,8 +92,14 @@ fun Drawer(
       {
         coroutineScope.launch {
           when (val result = overlayHost.showAccountPicker()) {
-            AccountPickerResult.AddAccount -> state.eventSink(DrawerUiEvent.AddAccount)
-            is AccountPickerResult.SwitchAccount -> state.eventSink(DrawerUiEvent.SwitchAccount(result.server))
+            AccountPickerResult.AddAccount -> {
+              state.eventSink(DrawerUiEvent.AddAccount)
+              drawerState?.close()
+            }
+            is AccountPickerResult.SwitchAccount -> {
+              state.eventSink(DrawerUiEvent.SwitchAccount(result.server))
+              drawerState?.close()
+            }
             else -> Unit
           }
         }

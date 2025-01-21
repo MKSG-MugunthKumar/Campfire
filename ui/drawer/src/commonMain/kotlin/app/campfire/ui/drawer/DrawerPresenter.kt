@@ -34,7 +34,7 @@ class DrawerPresenter(
           }
         }
 
-        DrawerUiEvent.AddAccount -> navigator.goTo(LoginScreen)
+        DrawerUiEvent.AddAccount -> navigator.goTo(LoginScreen(isAddingAccount = true))
       }
     }
   }

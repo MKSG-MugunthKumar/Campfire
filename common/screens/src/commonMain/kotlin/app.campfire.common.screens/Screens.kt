@@ -29,9 +29,11 @@ data object WelcomeScreen : BaseScreen(name = "Welcome()") {
 }
 
 @Parcelize
-data object LoginScreen : BaseScreen(name = "Login()") {
+data class LoginScreen(
+  val isAddingAccount: Boolean = false,
+) : BaseScreen(name = "Login()") {
   override val presentation: Presentation
-    get() = Presentation(hideBottomNav = true)
+    get() = Presentation(hideBottomNav = !isAddingAccount)
 }
 
 @Parcelize
