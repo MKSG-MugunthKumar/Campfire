@@ -58,9 +58,12 @@ buildCache {
 }
 
 rootProject.name = "Campfire"
-include(":androidApp")
-include(":desktopApp")
-include(":shared")
+include(
+  ":app:android",
+  ":app:common",
+  ":app:desktop",
+  ":app:ios",
+)
 include(":core")
 include(
   ":audioplayer:api",
@@ -133,6 +136,7 @@ include(
 include(
   ":ui:appbar",
   ":ui:drawer",
+  ":ui:attribution",
 )
 
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
