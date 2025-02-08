@@ -9,7 +9,8 @@ kotlin {
         implementation(projects.features.sessions.api)
         implementation(projects.features.user.api)
         implementation(projects.features.libraries.api)
-        implementation(projects.audioplayer.api)
+        implementation(projects.infra.audioplayer.api)
+        implementation(projects.infra.audioplayer.publicUi)
 
         implementation(compose.components.resources)
 

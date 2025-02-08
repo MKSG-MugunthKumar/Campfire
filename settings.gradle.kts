@@ -66,8 +66,10 @@ include(
 )
 include(":core")
 include(
-  ":audioplayer:api",
-  ":audioplayer:impl",
+  ":infra:audioplayer:api",
+  ":infra:audioplayer:impl",
+  ":infra:audioplayer:public-ui",
+  ":infra:shake",
 )
 include(
   ":common:screens",
