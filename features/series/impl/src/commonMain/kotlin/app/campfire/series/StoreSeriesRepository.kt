@@ -15,6 +15,7 @@ import app.campfire.data.SeriesBookJoin
 import app.campfire.data.mapping.asDbModel
 import app.campfire.data.mapping.asDomainModel
 import app.campfire.data.mapping.asFetcherResult
+import app.campfire.data.mapping.dao.LibraryItemDao
 import app.campfire.network.AudioBookShelfApi
 import app.campfire.network.models.Series as NetworkSeries
 import app.campfire.series.api.SeriesRepository
@@ -46,6 +47,7 @@ class StoreSeriesRepository(
   private val userSession: UserSession,
   private val api: AudioBookShelfApi,
   private val db: CampfireDatabase,
+  private val libraryItemDao: LibraryItemDao,
   private val userRepository: UserRepository,
   private val tokenHydrator: TokenHydrator,
   private val dispatcherProvider: DispatcherProvider,
@@ -83,8 +85,10 @@ class StoreSeriesRepository(
               series.books?.forEach { book ->
                 val libraryItem = book.asDbModel(serverUrl)
                 val media = book.media.asDbModel(book.id)
-                db.libraryItemsQueries.insert(libraryItem)
-                db.mediaQueries.insert(media)
+
+                // If these items exist, lets not overwrite their metadata
+                db.libraryItemsQueries.insertOrIgnore(libraryItem)
+                db.mediaQueries.insertOrIgnore(media)
 
                 // Insert junction entry
                 db.seriesBookJoinQueries.insert(
@@ -115,7 +119,7 @@ class StoreSeriesRepository(
   private val libraryItemStore = StoreBuilder.from(
     fetcher = Fetcher.ofResult { s: SeriesItems ->
       val encodedSeriesId = Base64.encode(s.seriesId.encodeToByteArray())
-      api.getLibraryItems(s.libraryId, "series.$encodedSeriesId").asFetcherResult()
+      api.getLibraryItemsMinified(s.libraryId, "series.$encodedSeriesId").asFetcherResult()
     },
     sourceOfTruth = SourceOfTruth.of(
       reader = { s: SeriesItems ->
@@ -133,10 +137,16 @@ class StoreSeriesRepository(
         withContext(dispatcherProvider.databaseWrite) {
           db.transaction {
             items.forEach { item ->
+              // TODO: Update when https://github.com/advplyr/audiobookshelf/pull/3945 is merged
+//              libraryItemDao.insert(
+//                item = item,
+//                asTransaction = false,
+//              )
+
               val libraryItem = item.asDbModel(serverUrl)
               val media = item.media.asDbModel(item.id)
-              db.libraryItemsQueries.insert(libraryItem)
-              db.mediaQueries.insert(media)
+              db.libraryItemsQueries.insertOrIgnore(libraryItem)
+              db.mediaQueries.insertOrIgnore(media)
 
               // Insert junction entry
               db.seriesBookJoinQueries.insert(

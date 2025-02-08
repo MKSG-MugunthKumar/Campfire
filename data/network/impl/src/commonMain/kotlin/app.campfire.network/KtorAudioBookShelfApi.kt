@@ -10,10 +10,12 @@ import app.campfire.network.envelopes.AllLibrariesResponse
 import app.campfire.network.envelopes.AuthorResponse
 import app.campfire.network.envelopes.CollectionsResponse
 import app.campfire.network.envelopes.CreateBookmarkRequest
+import app.campfire.network.envelopes.Envelope
 import app.campfire.network.envelopes.LibraryItemsResponse
 import app.campfire.network.envelopes.LoginRequest
 import app.campfire.network.envelopes.LoginResponse
 import app.campfire.network.envelopes.MediaProgressUpdatePayload
+import app.campfire.network.envelopes.MinifiedLibraryItemsResponse
 import app.campfire.network.envelopes.PingResponse
 import app.campfire.network.envelopes.SeriesResponse
 import app.campfire.network.envelopes.SyncLocalSessionsResult
@@ -116,10 +118,28 @@ class KtorAudioBookShelfApi(
   override suspend fun getLibraryItems(
     libraryId: String,
     filter: String?,
-  ): Result<List<LibraryItemMinified<MinifiedBookMetadata>>> {
+  ): Result<List<LibraryItemExpanded>> {
     return trySendRequest<LibraryItemsResponse> {
       hydratedClientRequest({
         appendPathSegments("api", "libraries", libraryId, "items")
+        parameters.append("minified", "0")
+        filter?.let { f -> parameters.append("filter", f) }
+      })
+    }.map { it.results }
+  }
+
+  @Deprecated(
+    "This endpoint is deprecated since it only returns the minified model",
+    replaceWith = ReplaceWith("getLibraryItems"),
+  )
+  override suspend fun getLibraryItemsMinified(
+    libraryId: String,
+    filter: String?,
+  ): Result<List<LibraryItemMinified<MinifiedBookMetadata>>> {
+    return trySendRequest<MinifiedLibraryItemsResponse> {
+      hydratedClientRequest({
+        appendPathSegments("api", "libraries", libraryId, "items")
+        parameters.append("minified", "1")
         filter?.let { f -> parameters.append("filter", f) }
       })
     }.map { it.results }
@@ -269,6 +289,13 @@ class KtorAudioBookShelfApi(
         if (body is NetworkModel && originServerUrl != null) {
           body.origin = RequestOrigin.Url(originServerUrl)
         }
+
+        // If our response model is an [Envelope] be sure to apply
+        // its postage.
+        if (body is Envelope) {
+          body.applyPostage()
+        }
+
         Result.success(body)
       } else {
         Result.failure(ApiException(response.status.value, response.bodyAsText()))

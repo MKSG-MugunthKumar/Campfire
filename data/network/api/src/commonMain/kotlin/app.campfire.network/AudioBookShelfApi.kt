@@ -63,6 +63,27 @@ interface AudioBookShelfApi {
   suspend fun getLibraryItems(
     libraryId: String,
     filter: String? = null,
+  ): Result<List<LibraryItemExpanded>>
+
+  /**
+   * DEPRECATED
+   * ----------
+   * This endpoint is deprecated, and only in use while we get a fix merged upstream for returning
+   * the expanded item models from the backend.
+   * [https://github.com/advplyr/audiobookshelf/pull/3945](https://github.com/advplyr/audiobookshelf/pull/3945)
+   *
+   * Fetch a library's items
+   *
+   * @param libraryId the id of the library to fetch the items for
+   * @return as result with the list of library items
+   */
+  @Deprecated(
+    message = "This endpoint is deprecated since it only returns the minified model",
+    replaceWith = ReplaceWith("getLibraryItems"),
+  )
+  suspend fun getLibraryItemsMinified(
+    libraryId: String,
+    filter: String? = null,
   ): Result<List<LibraryItemMinified<MinifiedBookMetadata>>>
 
   /**
