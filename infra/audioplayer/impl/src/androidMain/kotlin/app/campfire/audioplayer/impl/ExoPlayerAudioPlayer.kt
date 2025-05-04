@@ -18,6 +18,7 @@ import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.exoplayer.source.MediaSource
 import androidx.media3.exoplayer.upstream.DefaultBandwidthMeter
 import app.campfire.audioplayer.AudioPlayer
+import app.campfire.audioplayer.OnFinishedListener
 import app.campfire.audioplayer.impl.mediaitem.MediaItemBuilder
 import app.campfire.audioplayer.impl.sleep.SleepTimerManager
 import app.campfire.audioplayer.impl.sleep.VolumeFadeController
@@ -111,6 +112,7 @@ class ExoPlayerAudioPlayer(
   private var previousVolumeLevel: Float = 0f
 
   override var preparedSession: Session? = null
+  private var finishedListener: OnFinishedListener? = null
 
   override val state = MutableStateFlow(AudioPlayer.State.Disabled)
   override val overallTime = MutableStateFlow(0.seconds)
@@ -126,8 +128,10 @@ class ExoPlayerAudioPlayer(
     session: Session,
     playImmediately: Boolean,
     chapterId: Int?,
+    onFinished: OnFinishedListener,
   ) = withContext(Dispatchers.Main) {
     preparedSession = session
+    finishedListener = onFinished
     state.value = AudioPlayer.State.Initializing
 
     val mediaItems = MediaItemBuilder.build(session).asPlatformMediaItems()
@@ -201,6 +205,7 @@ class ExoPlayerAudioPlayer(
 
   override fun release() {
     preparedSession = null
+    finishedListener = null
     scope.cancel()
   }
 
@@ -243,6 +248,7 @@ class ExoPlayerAudioPlayer(
 
   override fun stop() {
     preparedSession = null
+    finishedListener = null
     exoPlayer.stop()
   }
 
@@ -313,6 +319,15 @@ class ExoPlayerAudioPlayer(
    * Player Listener Callbacks
    */
 
+  override fun onPlaybackStateChanged(playbackState: Int) {
+    if (playbackState == Player.STATE_ENDED) {
+      bark(AUDIO_TAG) { "Playback has ended! Mark the item as finished" }
+      scope.launch {
+        finishedListener?.invoke(preparedSession?.libraryItem?.id ?: return@launch)
+      }
+    }
+  }
+
   override fun onTimelineChanged(timeline: Timeline, reason: Int) {
     currentDuration.value = exoPlayer.duration.milliseconds
   }
@@ -338,6 +353,7 @@ class ExoPlayerAudioPlayer(
           true -> AudioPlayer.State.Playing
           false -> AudioPlayer.State.Paused
         }
+        Player.STATE_ENDED -> AudioPlayer.State.Finished
 
         else -> AudioPlayer.State.Disabled
       }

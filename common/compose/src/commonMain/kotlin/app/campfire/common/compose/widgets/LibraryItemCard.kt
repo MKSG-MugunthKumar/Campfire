@@ -20,6 +20,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.unit.dp
 import app.campfire.common.compose.layout.LocalContentLayout
@@ -27,8 +28,10 @@ import app.campfire.common.compose.layout.cardElevation
 import app.campfire.core.model.LibraryItem
 import app.campfire.core.model.MediaProgress
 import campfire.common.compose.generated.resources.Res
+import campfire.common.compose.generated.resources.placeholder_book
 import campfire.common.compose.generated.resources.unknown_author_name
 import campfire.common.compose.generated.resources.unknown_library_title
+import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
 private val CardMaxWidth = 400.dp
@@ -49,9 +52,11 @@ fun LibraryItemCard(
     Box(
       modifier = Modifier.clip(shape),
     ) {
-      ItemImage(
+      CoverImage(
         imageUrl = item.media.coverImageUrl,
         contentDescription = item.media.metadata.title,
+        placeholder = painterResource(Res.drawable.placeholder_book),
+        shape = RectangleShape,
         modifier = Modifier
           .aspectRatio(1f)
           .fillMaxWidth()

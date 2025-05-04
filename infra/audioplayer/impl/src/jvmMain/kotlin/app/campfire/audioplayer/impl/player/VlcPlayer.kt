@@ -40,6 +40,8 @@ class VlcPlayer {
 
   private val mediaPlayer: MediaPlayer
 
+  private var didFinish: Boolean = false
+
   var volume: Float
     get() = mediaPlayer.audio().volume() / 100f
     set(value) {
@@ -131,6 +133,10 @@ class VlcPlayer {
     if (currentItemIndex < mediaItems.size - 1) {
       currentItemIndex += 1
       prepareCurrentItem()
+    } else {
+      // We are finished!
+      didFinish = true
+      listener?.onFinished()
     }
   }
 
@@ -169,6 +175,8 @@ class VlcPlayer {
   ) {
     mediaItems.getOrNull(currentItemIndex)?.also { item ->
       val wasHandled = listener?.onMediaItemChanged(item) == true
+
+      didFinish = false
 
       if (mediaPlayer.isPlaying) {
         mediaPlayer.stop()
@@ -212,6 +220,7 @@ class VlcPlayer {
     fun onDurationChanged(durationInMillis: Long)
     fun onPositionChanged(positionInMillis: Long)
     fun onMediaItemChanged(mediaItem: MediaItem): Boolean
+    fun onFinished()
   }
 
   private inner class EventListener : MediaPlayerEventAdapter() {
@@ -247,7 +256,7 @@ class VlcPlayer {
 
     override fun stopped(mediaPlayer: MediaPlayer?) {
       dbark { "stopped()" }
-      mediaPlayer?.syncStateToListener()
+//      mediaPlayer?.syncStateToListener()
     }
 
     override fun forward(mediaPlayer: MediaPlayer?) {
@@ -263,6 +272,7 @@ class VlcPlayer {
       listener?.onPositionChanged(0L)
       mediaPlayer?.submit {
         skipToNext()
+        mediaPlayer.syncStateToListener()
       }
     }
 
@@ -330,6 +340,7 @@ class VlcPlayer {
 
     private fun MediaPlayer.syncStateToListener() {
       val state = status().state() ?: State.NOTHING_SPECIAL
+      ibark { "VlcPlayer State: ${state.name}, didFinish=$didFinish" }
       val playerState = when (state) {
         State.PLAYING -> AudioPlayer.State.Playing
         State.PAUSED -> AudioPlayer.State.Paused
@@ -338,9 +349,11 @@ class VlcPlayer {
         State.BUFFERING,
         -> AudioPlayer.State.Buffering
 
-        State.STOPPED,
+        State.ENDED -> AudioPlayer.State.Finished
+
+        State.STOPPED -> if (didFinish) AudioPlayer.State.Finished else AudioPlayer.State.Disabled
+
         State.ERROR,
-        State.ENDED,
         State.NOTHING_SPECIAL,
         -> AudioPlayer.State.Disabled
       }
@@ -350,7 +363,7 @@ class VlcPlayer {
 
   companion object : Cork {
     override val tag: String = "VlcPlayer"
-    override val enabled: Boolean = false
+    override val enabled: Boolean = true
   }
 }
 
