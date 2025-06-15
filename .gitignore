@@ -2,6 +2,10 @@
 .gradle
 build/
 
+# Signing information
+app/signing/campfire.keystore
+app/android/google-services.json
+
 captures
 
 /local.properties
