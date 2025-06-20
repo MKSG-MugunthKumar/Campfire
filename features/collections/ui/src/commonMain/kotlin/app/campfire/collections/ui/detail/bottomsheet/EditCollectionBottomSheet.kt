@@ -1,4 +1,4 @@
-package app.campfire.collections.ui.list.bottomsheets
+package app.campfire.collections.ui.detail.bottomsheet
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,7 +13,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.LibraryAdd
+import androidx.compose.material.icons.rounded.Save
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -37,49 +37,49 @@ import app.campfire.collections.api.CollectionsRepository
 import app.campfire.common.compose.di.rememberComponent
 import app.campfire.core.di.UserScope
 import app.campfire.core.logging.bark
-import app.campfire.core.model.CollectionId
+import app.campfire.core.model.Collection
 import campfire.features.collections.ui.generated.resources.Res
-import campfire.features.collections.ui.generated.resources.new_collection_bottomsheet_action_create
-import campfire.features.collections.ui.generated.resources.new_collection_bottomsheet_action_creating
-import campfire.features.collections.ui.generated.resources.new_collection_bottomsheet_input_description_label
-import campfire.features.collections.ui.generated.resources.new_collection_bottomsheet_input_title_label
-import campfire.features.collections.ui.generated.resources.new_collection_bottomsheet_title
+import campfire.features.collections.ui.generated.resources.edit_collection_bottomsheet_action_create
+import campfire.features.collections.ui.generated.resources.edit_collection_bottomsheet_action_creating
+import campfire.features.collections.ui.generated.resources.edit_collection_bottomsheet_input_description_label
+import campfire.features.collections.ui.generated.resources.edit_collection_bottomsheet_input_title_label
+import campfire.features.collections.ui.generated.resources.edit_collection_bottomsheet_title
 import com.r0adkll.kimchi.annotations.ContributesTo
 import com.slack.circuit.overlay.OverlayHost
 import com.slack.circuitx.overlays.BottomSheetOverlay
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 
-sealed interface NewCollectionResult {
-  data object None : NewCollectionResult
-  data class Created(
-    val id: CollectionId,
-    val name: String,
-  ) : NewCollectionResult
+sealed interface EditCollectionResult {
+  data object None : EditCollectionResult
+  data object Edited : EditCollectionResult
 }
 
 @ContributesTo(UserScope::class)
-interface NewCollectionBottomSheetComponent {
+interface EditCollectionBottomSheetComponent {
   val collectionsRepository: CollectionsRepository
 }
 
-suspend fun OverlayHost.showNewCollectionBottomSheet(): NewCollectionResult {
+suspend fun OverlayHost.showEditCollectionBottomSheet(
+  collection: Collection,
+): EditCollectionResult {
   return show(
-    BottomSheetOverlay<Unit, NewCollectionResult>(
-      model = Unit,
-      onDismiss = { NewCollectionResult.None },
+    BottomSheetOverlay<Collection, EditCollectionResult>(
+      model = collection,
+      onDismiss = { EditCollectionResult.None },
       sheetShape = RoundedCornerShape(
         topStart = 32.dp,
         topEnd = 32.dp,
       ),
       skipPartiallyExpandedState = true,
-    ) { _, overlayNavigator ->
+    ) { c, overlayNavigator ->
       SheetScaffold(
-        title = { Text(stringResource(Res.string.new_collection_bottomsheet_title)) },
+        title = { Text(stringResource(Res.string.edit_collection_bottomsheet_title)) },
       ) {
-        NewCollectionBottomSheet(
-          onCollectionCreated = { id, name ->
-            overlayNavigator.finish(NewCollectionResult.Created(id, name))
+        EditCollectionBottomSheet(
+          collection = c,
+          onCollectionEdited = {
+            overlayNavigator.finish(EditCollectionResult.Edited)
           },
         )
         Spacer(Modifier.height(16.dp))
@@ -122,16 +122,17 @@ internal fun SheetScaffold(
 }
 
 @Composable
-private fun NewCollectionBottomSheet(
-  onCollectionCreated: (CollectionId, String) -> Unit,
+private fun EditCollectionBottomSheet(
+  collection: Collection,
+  onCollectionEdited: () -> Unit,
   modifier: Modifier = Modifier,
-  component: NewCollectionBottomSheetComponent = rememberComponent(),
+  component: EditCollectionBottomSheetComponent = rememberComponent(),
 ) {
   val scope = rememberCoroutineScope()
   var isCreating by remember { mutableStateOf(false) }
 
-  var name by remember { mutableStateOf(TextFieldValue("")) }
-  var description by remember { mutableStateOf(TextFieldValue("")) }
+  var name by remember { mutableStateOf(TextFieldValue(collection.name)) }
+  var description by remember { mutableStateOf(TextFieldValue(collection.description ?: "")) }
   val isValid = name.text.isNotBlank()
 
   Column(
@@ -145,7 +146,7 @@ private fun NewCollectionBottomSheet(
       enabled = !isCreating,
       value = name,
       onValueChange = { name = it },
-      label = { Text(stringResource(Res.string.new_collection_bottomsheet_input_title_label)) },
+      label = { Text(stringResource(Res.string.edit_collection_bottomsheet_input_title_label)) },
       modifier = Modifier
         .fillMaxWidth(),
     )
@@ -156,7 +157,7 @@ private fun NewCollectionBottomSheet(
       enabled = !isCreating,
       value = description,
       onValueChange = { description = it },
-      label = { Text(stringResource(Res.string.new_collection_bottomsheet_input_description_label)) },
+      label = { Text(stringResource(Res.string.edit_collection_bottomsheet_input_description_label)) },
       modifier = Modifier
         .fillMaxWidth(),
     )
@@ -168,11 +169,15 @@ private fun NewCollectionBottomSheet(
         isCreating = true
         scope.launch {
           try {
-            val newCollectionId = component.collectionsRepository
-              .createCollection(name.text.trim(), description.text.trim())
-            onCollectionCreated(newCollectionId, name.text.trim())
+            component.collectionsRepository
+              .updateCollection(
+                collectionId = collection.id,
+                name = name.text.trim().takeIf { it.isNotBlank() },
+                description = description.text.trim().takeIf { it.isNotBlank() },
+              )
+            onCollectionEdited()
           } catch (e: Throwable) {
-            bark(throwable = e) { "Failed to create collection" }
+            bark(throwable = e) { "Failed to edit collection" }
           } finally {
             isCreating = false
           }
@@ -185,13 +190,13 @@ private fun NewCollectionBottomSheet(
       if (isCreating) {
         CircularProgressIndicator(modifier = Modifier.size(24.dp))
       } else {
-        Icon(Icons.Rounded.LibraryAdd, contentDescription = null)
+        Icon(Icons.Rounded.Save, contentDescription = null)
       }
       Spacer(Modifier.width(ButtonDefaults.IconSpacing))
       if (isCreating) {
-        Text(stringResource(Res.string.new_collection_bottomsheet_action_creating))
+        Text(stringResource(Res.string.edit_collection_bottomsheet_action_creating))
       } else {
-        Text(stringResource(Res.string.new_collection_bottomsheet_action_create))
+        Text(stringResource(Res.string.edit_collection_bottomsheet_action_create))
       }
     }
   }
