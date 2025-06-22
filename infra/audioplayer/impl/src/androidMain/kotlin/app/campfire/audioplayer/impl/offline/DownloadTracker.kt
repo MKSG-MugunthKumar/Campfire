@@ -7,7 +7,6 @@ import androidx.media3.common.C
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.offline.Download
 import androidx.media3.exoplayer.offline.DownloadManager
-import app.campfire.audioplayer.impl.mediaitem.MediaItemBuilder
 import app.campfire.audioplayer.offline.OfflineDownload
 import app.campfire.core.di.AppScope
 import app.campfire.core.di.SingleIn
@@ -56,10 +55,11 @@ class DownloadTracker(
   fun observe(): SharedFlow<Event> = events.asSharedFlow()
 
   fun getOfflineDownload(item: LibraryItem): OfflineDownload {
-    val mediaItems = MediaItemBuilder.build(item)
-    if (mediaItems.isEmpty()) return OfflineDownload(item)
+    if (item.media.tracks.isEmpty()) return OfflineDownload(item)
 
-    val itemDownloads = mediaItems.map { downloads[it.uri.toUri()] }
+    val itemDownloads = item.media.tracks.map {
+      downloads[it.contentUrlWithToken.toUri()]
+    }
 
     // Condense the collective set of states
     val states = itemDownloads
