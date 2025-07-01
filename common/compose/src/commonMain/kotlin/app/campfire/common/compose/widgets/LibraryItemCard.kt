@@ -14,13 +14,16 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Circle
 import androidx.compose.material.icons.rounded.CheckCircle
-import androidx.compose.material.icons.rounded.Circle
+import androidx.compose.material.icons.rounded.CloudDone
+import androidx.compose.material.icons.rounded.Warning
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -35,11 +38,13 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import app.campfire.common.compose.layout.LocalContentLayout
 import app.campfire.common.compose.layout.cardElevation
 import app.campfire.core.model.LibraryItem
 import app.campfire.core.model.MediaProgress
+import app.campfire.core.offline.OfflineStatus
 import campfire.common.compose.generated.resources.Res
 import campfire.common.compose.generated.resources.placeholder_book
 import campfire.common.compose.generated.resources.unknown_author_name
@@ -56,6 +61,7 @@ fun LibraryItemCard(
   modifier: Modifier = Modifier,
   isSelectable: Boolean = false,
   selected: Boolean = false,
+  offlineStatus: OfflineStatus = OfflineStatus.None,
 ) {
   val contentLayout = LocalContentLayout.current
 
@@ -65,7 +71,7 @@ fun LibraryItemCard(
   ) {
     Box {
       Column {
-        LibraryItemCardImage(item)
+        LibraryItemCardImage(item, offlineStatus)
         LibraryItemCardInformation(item)
       }
 
@@ -81,6 +87,7 @@ fun LibraryItemCard(
 @Composable
 private fun LibraryItemCardImage(
   item: LibraryItem,
+  offlineStatus: OfflineStatus,
   modifier: Modifier = Modifier,
 ) {
   val shape = RoundedCornerShape(ThumbnailCornerSize)
@@ -106,6 +113,18 @@ private fun LibraryItemCardImage(
         modifier = Modifier
           .align(Alignment.BottomCenter)
           .fillMaxWidth(),
+      )
+    }
+
+    if (offlineStatus != OfflineStatus.None) {
+      OfflineStatusIndicator(
+        status = offlineStatus,
+        modifier = Modifier
+          .align(Alignment.TopEnd)
+          .padding(
+            end = 8.dp,
+            top = 8.dp,
+          ),
       )
     }
   }
@@ -220,6 +239,54 @@ private fun MediaProgressBar(
       size = progressSize,
       cornerRadius = CornerRadius(cornerRadiusPx),
     )
+  }
+}
+
+@Composable
+fun OfflineStatusIndicator(
+  status: OfflineStatus,
+  modifier: Modifier = Modifier,
+  size: Dp = 18.dp,
+  tint: Color = Color.White,
+) {
+  when (status) {
+    OfflineStatus.None -> Unit
+    is OfflineStatus.Downloading -> {
+      CircularProgressIndicator(
+        progress = { status.progress },
+        strokeWidth = 3.dp,
+        color = tint,
+        modifier = modifier
+          .size(size),
+      )
+    }
+    OfflineStatus.Queued -> {
+      CircularProgressIndicator(
+        strokeWidth = 3.dp,
+        color = tint,
+        modifier = modifier
+          .size(size),
+      )
+    }
+    OfflineStatus.Available -> {
+      Icon(
+        Icons.Rounded.CloudDone,
+        contentDescription = null,
+        tint = tint,
+        modifier = modifier
+          .size(size),
+      )
+    }
+
+    OfflineStatus.Failed -> {
+      Icon(
+        Icons.Rounded.Warning,
+        contentDescription = null,
+        tint = MaterialTheme.colorScheme.error,
+        modifier = modifier
+          .size(size),
+      )
+    }
   }
 }
 

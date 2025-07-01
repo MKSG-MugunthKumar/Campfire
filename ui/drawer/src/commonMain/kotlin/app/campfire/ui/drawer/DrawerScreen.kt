@@ -5,10 +5,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.QueryStats
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.rounded.Folder
 import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.QueryStats
 import androidx.compose.material.icons.rounded.Settings
@@ -51,7 +49,6 @@ import app.campfire.common.screens.LibraryScreen
 import app.campfire.common.screens.SeriesScreen
 import app.campfire.common.screens.SettingsScreen
 import app.campfire.common.screens.StatisticsScreen
-import app.campfire.common.screens.StorageScreen
 import app.campfire.core.di.UserScope
 import app.campfire.core.isDebug
 import campfire.ui.drawer.generated.resources.Res
@@ -69,8 +66,6 @@ import campfire.ui.drawer.generated.resources.nav_settings_content_description
 import campfire.ui.drawer.generated.resources.nav_settings_label
 import campfire.ui.drawer.generated.resources.nav_statistics_content_description
 import campfire.ui.drawer.generated.resources.nav_statistics_label
-import campfire.ui.drawer.generated.resources.nav_storage_content_description
-import campfire.ui.drawer.generated.resources.nav_storage_label
 import com.r0adkll.kimchi.circuit.annotations.CircuitInject
 import com.slack.circuit.overlay.LocalOverlayHost
 import kotlinx.coroutines.launch
@@ -159,17 +154,16 @@ private fun DrawerSheet(
 private fun buildDrawerItems(): List<HomeNavigationItem> {
   val navigationType = LocalWindowSizeClass.current.navigationType
   return buildList {
-    add(
-      HomeNavigationItem(
-        screen = HomeScreen,
-        label = stringResource(Res.string.nav_home_label),
-        contentDescription = stringResource(Res.string.nav_home_content_description),
-        iconImageVector = Icons.Rounded.Home,
-        selectedImageVector = Icons.Filled.Home,
-      ),
-    )
-
     if (navigationType == NavigationType.Drawer) {
+      add(
+        HomeNavigationItem(
+          screen = HomeScreen,
+          label = stringResource(Res.string.nav_home_label),
+          contentDescription = stringResource(Res.string.nav_home_content_description),
+          iconImageVector = Icons.Rounded.Home,
+          selectedImageVector = Icons.Filled.Home,
+        ),
+      )
       add(
         HomeNavigationItem(
           screen = LibraryScreen,
@@ -217,15 +211,15 @@ private fun buildDrawerItems(): List<HomeNavigationItem> {
         selectedImageVector = Icons.Filled.QueryStats,
       ),
     )
-    add(
-      HomeNavigationItem(
-        screen = StorageScreen,
-        label = stringResource(Res.string.nav_storage_label),
-        contentDescription = stringResource(Res.string.nav_storage_content_description),
-        iconImageVector = Icons.Rounded.Folder,
-        selectedImageVector = Icons.Filled.Folder,
-      ),
-    )
+//    add(
+//      HomeNavigationItem(
+//        screen = StorageScreen,
+//        label = stringResource(Res.string.nav_storage_label),
+//        contentDescription = stringResource(Res.string.nav_storage_content_description),
+//        iconImageVector = Icons.Rounded.Folder,
+//        selectedImageVector = Icons.Filled.Folder,
+//      ),
+//    )
     add(
       HomeNavigationItem(
         screen = SettingsScreen(),
