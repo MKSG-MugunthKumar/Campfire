@@ -11,10 +11,6 @@ TODO: Use https://github.com/ffurrer2/extract-release-notes when crafting a rele
 
 ### Added
 
-- Library switcher UI for changing your selected library.
-- Offline status indicators on all surfaces that show library items.
-- Android home screen widget to control playback
-
 ### Changed
 
 ### Deprecated
@@ -22,8 +18,6 @@ TODO: Use https://github.com/ffurrer2/extract-release-notes when crafting a rele
 ### Removed
 
 ### Fixed
-
-- Fix issue with non-ssl traffic for self-hosted servers not behind https
 
 ### Other Notes & Contributions
 
