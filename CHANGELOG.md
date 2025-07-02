@@ -27,6 +27,18 @@ TODO: Use https://github.com/ffurrer2/extract-release-notes when crafting a rele
 
 ### Other Notes & Contributions
 
+## [0.3.0-alpha] - 2025-07-02
+
+### Added
+
+- Library switcher UI for changing your selected library.
+- Offline status indicators on all surfaces that show library items.
+- Android home screen widget to control playback
+
+### Fixed
+
+- Fix issue with non-ssl traffic for self-hosted servers not behind https
+
 ## [0.2.1-alpha] - 2025-06-22
 
 ### Added
