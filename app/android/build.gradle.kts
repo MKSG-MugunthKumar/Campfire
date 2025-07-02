@@ -9,7 +9,6 @@ import com.google.firebase.appdistribution.gradle.firebaseAppDistribution
 import org.objectweb.asm.ClassVisitor
 import org.objectweb.asm.FieldVisitor
 
-
 plugins {
   id("app.campfire.android.application")
   id("app.campfire.kotlin.android")
@@ -100,7 +99,7 @@ android {
 
       firebaseAppDistribution {
         artifactType = "APK"
-        groups = "internal"
+        groups = "internal,external-public"
       }
     }
 
