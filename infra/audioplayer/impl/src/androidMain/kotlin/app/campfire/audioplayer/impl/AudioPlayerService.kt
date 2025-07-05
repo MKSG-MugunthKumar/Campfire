@@ -10,24 +10,31 @@ import android.os.Bundle
 import androidx.core.app.NotificationChannelCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.session.CommandButton
 import androidx.media3.session.DefaultMediaNotificationProvider
+import androidx.media3.session.LibraryResult
+import androidx.media3.session.MediaLibraryService
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSession.ConnectionResult
 import androidx.media3.session.MediaSession.ConnectionResult.AcceptedResultBuilder
-import androidx.media3.session.MediaSessionService
 import androidx.media3.session.SessionCommand
 import androidx.media3.session.SessionError
 import androidx.media3.session.SessionResult
 import app.campfire.audioplayer.AudioPlayerHolder
+import app.campfire.audioplayer.impl.browse.MediaTree
+import app.campfire.audioplayer.impl.browse.SuspendingMediaLibrarySessionCallback
+import app.campfire.audioplayer.impl.session.PlaybackSessionManager
 import app.campfire.core.ActivityIntentProvider
 import app.campfire.core.di.AppScope
 import app.campfire.core.di.ComponentHolder
+import app.campfire.core.di.UserScope
 import app.campfire.core.logging.LogPriority
 import app.campfire.core.logging.bark
 import app.campfire.infra.audioplayer.impl.R
 import app.campfire.settings.api.PlaybackSettings
+import com.google.common.collect.ImmutableList
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 import com.r0adkll.kimchi.annotations.ContributesTo
@@ -35,6 +42,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.guava.future
 
 @ContributesTo(AppScope::class)
 interface AudioPlayerComponent {
@@ -44,16 +52,26 @@ interface AudioPlayerComponent {
   val activityIntentProvider: ActivityIntentProvider // AppScope
 }
 
+@ContributesTo(UserScope::class)
+interface AudioPlayerUserComponent {
+  val mediaTree: MediaTree
+  val playbackSessionManager: PlaybackSessionManager
+}
+
 @SuppressLint("UnsafeOptInUsageError")
-class AudioPlayerService : MediaSessionService() {
+class AudioPlayerService : MediaLibraryService() {
 
   private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
   private lateinit var player: ExoPlayerAudioPlayer
-  private var session: MediaSession? = null
+  private var session: MediaLibrarySession? = null
 
   private val component by lazy {
     ComponentHolder.component<AudioPlayerComponent>()
+  }
+
+  private val userComponent by lazy {
+    ComponentHolder.component<AudioPlayerUserComponent>()
   }
 
   override fun onCreate() {
@@ -63,8 +81,7 @@ class AudioPlayerService : MediaSessionService() {
     // Create ExoPlayer instance and MediaSession instance that encapsulates the background
     // playback on Android.
     player = component.exoPlayerFactory.create(this)
-    session = MediaSession.Builder(this, player.exoPlayer)
-      .setCallback(MediaSessionCallback())
+    session = MediaLibrarySession.Builder(this, player.exoPlayer, MediaSessionCallback())
       .setSessionActivity(
         PendingIntent.getActivity(
           this,
@@ -94,7 +111,7 @@ class AudioPlayerService : MediaSessionService() {
     setMediaNotificationProvider(mediaNotificationProvider)
   }
 
-  override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? = session
+  override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaLibrarySession? = session
 
   override fun onTaskRemoved(rootIntent: Intent?) {
     bark(LogPriority.INFO) { "AudioPlayerService::onTaskRemoved($rootIntent)" }
@@ -159,25 +176,29 @@ class AudioPlayerService : MediaSessionService() {
     }
   }
 
-  private inner class MediaSessionCallback : MediaSession.Callback {
+  private inner class MediaSessionCallback : SuspendingMediaLibrarySessionCallback(serviceScope) {
 
     override fun onConnect(
       session: MediaSession,
       controller: MediaSession.ControllerInfo,
     ): ConnectionResult {
-      val customLayoutCommandButtons = createCustomLayoutCommandButtons()
-      val sessionCommands = ConnectionResult.DEFAULT_SESSION_COMMANDS.buildUpon()
-        .apply {
-          customLayoutCommandButtons.forEach { cmd ->
-            cmd.sessionCommand?.let(::add)
+      if (session.isMediaNotificationController(controller)) {
+        val customLayoutCommandButtons = createCustomLayoutCommandButtons()
+        val sessionCommands = ConnectionResult.DEFAULT_SESSION_COMMANDS.buildUpon()
+          .apply {
+            customLayoutCommandButtons.forEach { cmd ->
+              cmd.sessionCommand?.let(::add)
+            }
           }
-        }
-        .build()
+          .build()
 
-      return AcceptedResultBuilder(session)
-        .setAvailableSessionCommands(sessionCommands)
-        .setCustomLayout(customLayoutCommandButtons)
-        .build()
+        return AcceptedResultBuilder(session)
+          .setAvailableSessionCommands(sessionCommands)
+          .setCustomLayout(customLayoutCommandButtons)
+          .build()
+      } else {
+        return super.onConnect(session, controller)
+      }
     }
 
     override fun onCustomCommand(
@@ -198,6 +219,114 @@ class AudioPlayerService : MediaSessionService() {
         }
 
         else -> Futures.immediateFuture(SessionResult(SessionError.ERROR_NOT_SUPPORTED))
+      }
+    }
+
+    override suspend fun onGetLibraryRootInternal(
+      session: MediaLibrarySession,
+      browser: MediaSession.ControllerInfo,
+      params: LibraryParams?,
+    ): LibraryResult<MediaItem> {
+      return LibraryResult.ofItem(userComponent.mediaTree.root, params)
+    }
+
+    override suspend fun onGetChildrenInternal(
+      session: MediaLibrarySession,
+      browser: MediaSession.ControllerInfo,
+      parentId: String,
+      page: Int,
+      pageSize: Int,
+      params: LibraryParams?,
+    ): LibraryResult<ImmutableList<MediaItem>> {
+      val children = userComponent.mediaTree.getChildren(parentId)
+      if (children.isNotEmpty()) {
+        return LibraryResult.ofItemList(children, params)
+      }
+      return LibraryResult.ofError(SessionError.ERROR_BAD_VALUE)
+    }
+
+    override suspend fun onGetItemInternal(
+      session: MediaLibrarySession,
+      browser: MediaSession.ControllerInfo,
+      mediaId: String,
+    ): LibraryResult<MediaItem> {
+      userComponent.mediaTree.getItem(mediaId)?.let {
+        return LibraryResult.ofItem(it, null)
+      }
+      return LibraryResult.ofError(SessionError.ERROR_BAD_VALUE)
+    }
+
+    override suspend fun onSearchInternal(
+      session: MediaLibrarySession,
+      browser: MediaSession.ControllerInfo,
+      query: String,
+      params: LibraryParams?,
+    ): LibraryResult<Void> {
+      val results = userComponent.mediaTree.search(query)
+      session.notifySearchResultChanged(browser, query, results.size, params)
+      return LibraryResult.ofVoid()
+    }
+
+    override suspend fun onGetSearchResultInternal(
+      session: MediaLibrarySession,
+      browser: MediaSession.ControllerInfo,
+      query: String,
+      page: Int,
+      pageSize: Int,
+      params: LibraryParams?,
+    ): LibraryResult<ImmutableList<MediaItem>> {
+      return userComponent.mediaTree.search(query).let {
+        LibraryResult.ofItemList(it, params)
+      }
+    }
+
+    override suspend fun onAddMediaItemsInternal(
+      mediaSession: MediaSession,
+      controller: MediaSession.ControllerInfo,
+      mediaItems: MutableList<MediaItem>,
+    ): MutableList<MediaItem> {
+      return super.onAddMediaItemsInternal(mediaSession, controller, mediaItems)
+    }
+
+    override fun onSetMediaItems(
+      mediaSession: MediaSession,
+      controller: MediaSession.ControllerInfo,
+      mediaItems: List<MediaItem>,
+      startIndex: Int,
+      startPositionMs: Long,
+    ): ListenableFuture<MediaSession.MediaItemsWithStartPosition> {
+      if (mediaItems.size == 1) {
+        return serviceScope.future {
+          userComponent.playbackSessionManager.startSession(mediaItems.first().mediaId)
+
+          // Return an error from this response as we've take responsibility for starting playback and
+          // resolving / setting the media item(s).
+          error("Deliberately not return here")
+        }
+      } else {
+        return super.onSetMediaItems(mediaSession, controller, mediaItems, startIndex, startPositionMs)
+      }
+    }
+
+    override suspend fun onSetMediaItemsInternal(
+      mediaSession: MediaSession,
+      controller: MediaSession.ControllerInfo,
+      mediaItems: List<MediaItem>,
+      startIndex: Int,
+      startPositionMs: Long,
+    ): MediaSession.MediaItemsWithStartPosition {
+      val resolvedItems = mediaItems.flatMap { item ->
+        if (item.localConfiguration == null) {
+          userComponent.mediaTree.resolveMediaItem(item.mediaId)
+        } else {
+          listOf(item)
+        }
+      }
+
+      if (resolvedItems.none { it.localConfiguration == null }) {
+        return MediaSession.MediaItemsWithStartPosition(resolvedItems, startIndex, startPositionMs)
+      } else {
+        error("Media items contain an unplayable item!")
       }
     }
   }
