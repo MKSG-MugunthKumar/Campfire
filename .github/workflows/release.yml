@@ -58,11 +58,15 @@ jobs:
         id: changelog
         uses: coditory/changelog-parser@v1
 
+      - name: Create Release Notes
+        run: |
+          echo "${{ steps.changelog.outputs.description }}" >> app/android/release-notes.txt
+
       - name: Firebase App Distribution
         run: |
           ./gradlew :app:android:appDistributionUploadBetaRelease \
             --serviceCredentialsFile="app/android/campfire-app-distribution-service-account.json" \
-            --releaseNotes="${{ steps.changelog.outputs.description }}"
+            --releaseNotesFile="app/android/release-notes.txt"
 
       - name: Upload build outputs
         if: always()
