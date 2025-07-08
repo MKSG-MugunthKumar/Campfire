@@ -11,6 +11,20 @@ TODO: Use https://github.com/ffurrer2/extract-release-notes when crafting a rele
 
 ### Added
 
+### Changed
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Other Notes & Contributions
+
+## [0.4.0-alpha] - 2025-07-07
+
+### Added
+
 - Android Auto Support
 - Toggle on item detail to switch between time in book, and chapter length
 
@@ -22,17 +36,11 @@ TODO: Use https://github.com/ffurrer2/extract-release-notes when crafting a rele
 - Improved the homescreen widget appearance and actions
 - Widget can now expand vertically showing the list of chapters for the current item.
 
-### Deprecated
-
-### Removed
-
 ### Fixed
 
-- HTML is no rendered properly on the item detail page description
+- HTML is now rendered properly on the item detail page description
 - Fixed sleep timer fading-to-pause when set as "End of Chapter"
 - Fixed how PlayMethod not reporting offline play correctly
-
-### Other Notes & Contributions
 
 ## [0.3.0-alpha] - 2025-07-02
 
