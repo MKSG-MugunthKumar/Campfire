@@ -60,7 +60,7 @@ jobs:
 
       - name: Firebase App Distribution
         run: |
-          ./gradlew :app:android:appDistributionUploadRelease \
+          ./gradlew :app:android:appDistributionUploadBetaRelease \
             --serviceCredentialsFile="app/android/campfire-app-distribution-service-account.json" \
             --releaseNotes="${{ steps.changelog.outputs.description }}"
 
