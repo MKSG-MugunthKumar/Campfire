@@ -51,8 +51,11 @@ import app.campfire.core.offline.OfflineStatus
 import app.campfire.core.settings.ItemDisplayState
 import app.campfire.core.settings.SortDirection
 import app.campfire.core.settings.SortMode
-import app.campfire.libraries.ui.sort.SortModeResult
-import app.campfire.libraries.ui.sort.showSortModeBottomSheet
+import app.campfire.libraries.api.LibraryItemFilter
+import app.campfire.libraries.ui.list.sheets.filters.LibraryItemFilterResult
+import app.campfire.libraries.ui.list.sheets.filters.showItemFilterOverlay
+import app.campfire.libraries.ui.list.sheets.sort.SortModeResult
+import app.campfire.libraries.ui.list.sheets.sort.showSortModeBottomSheet
 import app.campfire.ui.appbar.CampfireAppBar
 import campfire.features.libraries.ui.generated.resources.Res
 import campfire.features.libraries.ui.generated.resources.empty_library_items_message
@@ -104,7 +107,18 @@ fun LibraryUi(
         onItemClick = { state.eventSink(LibraryUiEvent.ItemClick(it)) },
         itemDisplayState = state.itemDisplayState,
         onDisplayStateClick = { state.eventSink(LibraryUiEvent.ToggleItemDisplayState) },
-        onFilterClick = { state.eventSink(LibraryUiEvent.FilterClick) },
+        filter = state.filter,
+        onFilterClick = {
+          coroutineScope.launch {
+            val result = overlayHost.showItemFilterOverlay(
+              filter = state.filter,
+            )
+
+            if (result is LibraryItemFilterResult.Selected) {
+              state.eventSink(LibraryUiEvent.ItemFilterSelected(result.filter))
+            }
+          }
+        },
         sortMode = state.sort.mode,
         sortDirection = state.sort.direction,
         onSortClick = {
@@ -131,6 +145,7 @@ private fun LoadedContent(
   onItemClick: (LibraryItem) -> Unit,
   itemDisplayState: ItemDisplayState,
   onDisplayStateClick: () -> Unit,
+  filter: LibraryItemFilter?,
   onFilterClick: () -> Unit,
   sortMode: SortMode,
   sortDirection: SortDirection,
@@ -145,6 +160,7 @@ private fun LoadedContent(
       onItemClick = onItemClick,
       itemDisplayState = itemDisplayState,
       onDisplayStateClick = onDisplayStateClick,
+      filter = filter,
       onFilterClick = onFilterClick,
       sortMode = sortMode,
       sortDirection = sortDirection,
@@ -159,6 +175,7 @@ private fun LoadedContent(
       onItemClick = onItemClick,
       itemDisplayState = itemDisplayState,
       onDisplayStateClick = onDisplayStateClick,
+      filter = filter,
       onFilterClick = onFilterClick,
       sortMode = sortMode,
       sortDirection = sortDirection,
@@ -184,6 +201,7 @@ private fun LibraryGrid(
   onItemClick: (LibraryItem) -> Unit,
   itemDisplayState: ItemDisplayState,
   onDisplayStateClick: () -> Unit,
+  filter: LibraryItemFilter?,
   onFilterClick: () -> Unit,
   sortMode: SortMode,
   sortDirection: SortDirection,
@@ -207,7 +225,7 @@ private fun LibraryGrid(
         itemCount = items.size,
         itemDisplayState = itemDisplayState,
         onDisplayStateClick = onDisplayStateClick,
-        isFiltered = false,
+        isFiltered = filter != null,
         onFilterClick = onFilterClick,
         sortMode = sortMode,
         sortDirection = sortDirection,
@@ -237,6 +255,7 @@ fun LibraryList(
   onItemClick: (LibraryItem) -> Unit,
   itemDisplayState: ItemDisplayState,
   onDisplayStateClick: () -> Unit,
+  filter: LibraryItemFilter?,
   onFilterClick: () -> Unit,
   sortMode: SortMode,
   sortDirection: SortDirection,
@@ -255,7 +274,7 @@ fun LibraryList(
         itemCount = items.size,
         itemDisplayState = itemDisplayState,
         onDisplayStateClick = onDisplayStateClick,
-        isFiltered = false,
+        isFiltered = filter != null,
         onFilterClick = onFilterClick,
         sortMode = sortMode,
         sortDirection = sortDirection,

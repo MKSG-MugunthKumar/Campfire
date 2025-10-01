@@ -17,6 +17,7 @@ import app.campfire.data.mapping.asDomainModel
 import app.campfire.data.mapping.asFetcherResult
 import app.campfire.data.mapping.dao.LibraryItemDao
 import app.campfire.network.AudioBookShelfApi
+import app.campfire.network.models.LibraryItemFilter
 import app.campfire.network.models.Series as NetworkSeries
 import app.campfire.series.api.SeriesRepository
 import app.campfire.user.api.UserRepository
@@ -24,7 +25,6 @@ import app.cash.sqldelight.async.coroutines.awaitAsList
 import app.cash.sqldelight.coroutines.asFlow
 import app.cash.sqldelight.coroutines.mapToList
 import com.r0adkll.kimchi.annotations.ContributesBinding
-import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -119,8 +119,13 @@ class StoreSeriesRepository(
   @OptIn(ExperimentalEncodingApi::class)
   private val libraryItemStore = StoreBuilder.from(
     fetcher = Fetcher.ofResult { s: SeriesItems ->
-      val encodedSeriesId = Base64.encode(s.seriesId.encodeToByteArray())
-      api.getLibraryItemsMinified(s.libraryId, "series.$encodedSeriesId").asFetcherResult()
+      api.getLibraryItemsMinified(
+        libraryId = s.libraryId,
+        filter = LibraryItemFilter(
+          group = "series",
+          value = s.seriesId,
+        ),
+      ).asFetcherResult()
     },
     sourceOfTruth = SourceOfTruth.of(
       reader = { s: SeriesItems ->
@@ -137,7 +142,7 @@ class StoreSeriesRepository(
       writer = { s, items ->
         withContext(dispatcherProvider.databaseWrite) {
           db.transaction {
-            items.forEach { item ->
+            items.data.forEach { item ->
               // TODO: Update when https://github.com/advplyr/audiobookshelf/pull/3945 is merged
 //              libraryItemDao.insert(
 //                item = item,

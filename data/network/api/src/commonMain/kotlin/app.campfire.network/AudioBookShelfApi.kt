@@ -6,8 +6,10 @@ import app.campfire.network.envelopes.SyncLocalSessionsResult
 import app.campfire.network.models.AudioBookmark
 import app.campfire.network.models.Author
 import app.campfire.network.models.Collection
+import app.campfire.network.models.FilterData
 import app.campfire.network.models.Library
 import app.campfire.network.models.LibraryItemExpanded
+import app.campfire.network.models.LibraryItemFilter
 import app.campfire.network.models.LibraryItemMinified
 import app.campfire.network.models.LibraryStats
 import app.campfire.network.models.ListeningStats
@@ -62,7 +64,11 @@ interface AudioBookShelfApi {
    */
   suspend fun getLibraryItems(
     libraryId: String,
-    filter: String? = null,
+    filter: LibraryItemFilter? = null,
+    sortMode: String? = null,
+    sortDescending: Boolean = false,
+    page: Int = 0,
+    limit: Int = 0,
   ): Result<List<LibraryItemExpanded>>
 
   /**
@@ -83,8 +89,12 @@ interface AudioBookShelfApi {
   )
   suspend fun getLibraryItemsMinified(
     libraryId: String,
-    filter: String? = null,
-  ): Result<List<LibraryItemMinified<MinifiedBookMetadata>>>
+    filter: LibraryItemFilter? = null,
+    sortMode: String? = null,
+    sortDescending: Boolean = false,
+    page: Int = INVALID,
+    limit: Int = INVALID,
+  ): Result<PagedResponse<LibraryItemMinified<MinifiedBookMetadata>>>
 
   /**
    * Fetch a single library item
@@ -230,4 +240,11 @@ interface AudioBookShelfApi {
    * This endpoint retrieves a user's listening statistics.
    */
   suspend fun getListeningStats(): Result<ListeningStats>
+
+  /**
+   * Get all the data that the user can filter the list of library items with
+   */
+  suspend fun getFilterData(libraryId: String): Result<FilterData>
 }
+
+const val INVALID = -1
