@@ -67,11 +67,7 @@ fun CampfireContentWithInsets(
     LocalRetainedStateRegistry provides continuityRetainedStateRegistry(),
     LocalUriHandler provides appUriHandler,
   ) {
-    // TODO: We are re-shifting scopes, so this will need to be reworked
-    UserComponentContent(
-      userSessionManager = userSessionManager,
-    ) { userComponent ->
-
+    UserComponentContent(userSessionManager) { userComponent ->
       val backStack = key(userComponent.currentUserSession) { rememberSaveableBackStack(userComponent.rootScreen) }
       val navigator = key(userComponent.currentUserSession) { rememberCircuitNavigator(backStack) { onRootPop() } }
 
