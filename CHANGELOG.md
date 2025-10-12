@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+### Changed
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Other Notes & Contributions
+
+## [0.5.0-alpha] - 2025-10-12
+
+### Added
+
 - Library item filtering
 - Save playback speed across listening sessions
 - Toggle between time in book and chapter length in Now Playing chapter list
@@ -22,17 +36,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improved empty and default states in Author UI
 - Author placeholder image is now gender neutral
 
-### Deprecated
-
-### Removed
-
 ### Fixed
 
 - Navigating from search for Narrators, Genres, and Tags now works
 - Logging out & Changing accounts
 - Status bar now respects app theme
-
-### Other Notes & Contributions
 
 ## [0.4.0-alpha] - 2025-07-07
 
@@ -98,6 +106,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial Alpha Release.
 
+[0.5.0-alpha]: https://github.com/r0adkll/Campfire/compare/v0.4.0-alpha...v0.5.0-alpha
 [0.4.0-alpha]: https://github.com/r0adkll/Campfire/compare/v0.3.0-alpha...v0.4.0-alpha
 [0.3.0-alpha]: https://github.com/r0adkll/Campfire/compare/v0.2.1-alpha...v0.3.0-alpha
 [0.2.1-alpha]: https://github.com/r0adkll/Campfire/compare/v0.1.0-alpha...v0.2.1-alpha
