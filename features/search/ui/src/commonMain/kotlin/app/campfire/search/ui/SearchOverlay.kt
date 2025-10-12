@@ -1,6 +1,7 @@
 package app.campfire.search.ui
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
@@ -43,6 +44,7 @@ import com.slack.circuit.overlay.Overlay
 import com.slack.circuit.overlay.OverlayHost
 import com.slack.circuit.overlay.OverlayNavigator
 import com.slack.circuit.runtime.Navigator
+import com.slack.circuit.sharedelements.SharedElementTransitionLayout
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringArrayResource
@@ -71,10 +73,11 @@ class SearchOverlay(
     SearchContent(uiState)
   }
 
+  @OptIn(ExperimentalSharedTransitionApi::class)
   @Composable
   private fun SearchContent(
     state: SearchUiState,
-  ) {
+  ) = SharedElementTransitionLayout {
     val scope = rememberCoroutineScope()
     val eventSink = state.eventSink
 

@@ -1,5 +1,6 @@
 package app.campfire.search.ui.composables
 
+import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -46,14 +47,15 @@ import campfire.features.search.ui.generated.resources.header_genres
 import campfire.features.search.ui.generated.resources.header_narrators
 import campfire.features.search.ui.generated.resources.header_series
 import campfire.features.search.ui.generated.resources.header_tags
-import campfire.features.search.ui.generated.resources.search_empty_message
 import campfire.features.search.ui.generated.resources.search_results_empty_message
 import campfire.features.search.ui.generated.resources.search_results_error_message
+import com.slack.circuit.sharedelements.SharedElementTransitionLayout
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
 import org.jetbrains.compose.resources.stringResource
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 internal fun SearchResultContent(
   query: String,
@@ -66,7 +68,7 @@ internal fun SearchResultContent(
   onGenreClick: (BasicSearchResult) -> Unit,
   onNarratorClick: (BasicSearchResult) -> Unit,
   modifier: Modifier = Modifier,
-) {
+) = SharedElementTransitionLayout {
   when (results) {
     SearchResult.Error -> EmptyState(stringResource(Res.string.search_results_error_message), modifier)
     SearchResult.Loading -> LoadingState(modifier.fillMaxSize())
@@ -89,7 +91,7 @@ internal fun SearchResultContent(
       )
     } else if (results.isEmpty && query.isBlank()) {
       EmptyState(
-        message = stringResource(Res.string.search_empty_message),
+        message = "Your next adventure is just a \nsearch away!",
         modifier = modifier,
       )
     } else {

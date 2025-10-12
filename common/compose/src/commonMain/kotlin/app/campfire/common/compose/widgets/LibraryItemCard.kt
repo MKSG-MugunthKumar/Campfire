@@ -1,6 +1,9 @@
+@file:OptIn(ExperimentalSharedTransitionApi::class)
+
 package app.campfire.common.compose.widgets
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Canvas
@@ -36,12 +39,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import app.campfire.common.compose.layout.LocalContentLayout
 import app.campfire.common.compose.layout.cardElevation
+import app.campfire.core.extensions.fluentIf
 import app.campfire.core.model.LibraryItem
 import app.campfire.core.model.MediaProgress
 import app.campfire.core.offline.OfflineStatus
@@ -49,16 +52,29 @@ import campfire.common.compose.generated.resources.Res
 import campfire.common.compose.generated.resources.placeholder_book
 import campfire.common.compose.generated.resources.unknown_author_name
 import campfire.common.compose.generated.resources.unknown_library_title
+import com.slack.circuit.sharedelements.SharedElementTransitionScope
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
 private val CardMaxWidth = 400.dp
 private val ThumbnailCornerSize = 12.dp
 
+data class LibraryItemSharedTransitionKey(
+  val id: String,
+  val type: ElementType,
+) {
+  enum class ElementType {
+    Image,
+  }
+}
+
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun LibraryItemCard(
   item: LibraryItem,
   modifier: Modifier = Modifier,
+  sharedTransitionKey: String = item.id,
+  sharedTransitionZIndex: Float = 0f,
   isSelectable: Boolean = false,
   selected: Boolean = false,
   offlineStatus: OfflineStatus = OfflineStatus.None,
@@ -71,7 +87,12 @@ fun LibraryItemCard(
   ) {
     Box {
       Column {
-        LibraryItemCardImage(item, offlineStatus)
+        LibraryItemCardImage(
+          item = item,
+          sharedTransitionKey = sharedTransitionKey,
+          sharedTransitionZIndex = sharedTransitionZIndex,
+          offlineStatus = offlineStatus,
+        )
         LibraryItemCardInformation(item)
       }
 
@@ -87,9 +108,11 @@ fun LibraryItemCard(
 @Composable
 private fun LibraryItemCardImage(
   item: LibraryItem,
+  sharedTransitionKey: String,
+  sharedTransitionZIndex: Float,
   offlineStatus: OfflineStatus,
   modifier: Modifier = Modifier,
-) {
+) = SharedElementTransitionScope {
   val shape = RoundedCornerShape(ThumbnailCornerSize)
   Box(
     modifier = modifier
@@ -99,12 +122,25 @@ private fun LibraryItemCardImage(
       imageUrl = item.media.coverImageUrl,
       contentDescription = item.media.metadata.title,
       placeholder = painterResource(Res.drawable.placeholder_book),
-      shape = RectangleShape,
+      shape = shape,
       modifier = Modifier
         .aspectRatio(1f)
         .fillMaxWidth()
         .widthIn(max = CardMaxWidth)
         .clip(shape),
+      sharedElementModifier = Modifier
+        .fluentIf<Modifier>(findAnimatedScope(SharedElementTransitionScope.AnimatedScope.Navigation) != null) {
+          sharedElement(
+            sharedContentState = rememberSharedContentState(
+              LibraryItemSharedTransitionKey(
+                id = sharedTransitionKey,
+                type = LibraryItemSharedTransitionKey.ElementType.Image,
+              ),
+            ),
+            animatedVisibilityScope = requireAnimatedScope(SharedElementTransitionScope.AnimatedScope.Navigation),
+            zIndexInOverlay = sharedTransitionZIndex,
+          )
+        },
     )
 
     item.userMediaProgress?.let { mediaProgress ->
@@ -260,6 +296,7 @@ fun OfflineStatusIndicator(
           .size(size),
       )
     }
+
     OfflineStatus.Queued -> {
       CircularProgressIndicator(
         strokeWidth = 3.dp,
@@ -268,6 +305,7 @@ fun OfflineStatusIndicator(
           .size(size),
       )
     }
+
     OfflineStatus.Available -> {
       Icon(
         Icons.Rounded.CloudDone,

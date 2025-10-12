@@ -1,5 +1,6 @@
 package app.campfire.common.compose.widgets
 
+import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,24 +21,36 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
+import app.campfire.core.extensions.fluentIf
 import app.campfire.core.logging.bark
 import app.campfire.core.model.Author
 import campfire.common.compose.generated.resources.Res
-import campfire.common.compose.generated.resources.placeholder_man
-import campfire.common.compose.generated.resources.placeholder_woman
+import campfire.common.compose.generated.resources.filter_bar_book_count
+import campfire.common.compose.generated.resources.placeholder_person
 import coil3.compose.AsyncImagePainter
 import coil3.compose.rememberAsyncImagePainter
-import kotlin.random.Random
+import com.slack.circuit.sharedelements.SharedElementTransitionScope
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.pluralStringResource
 
 private val CardMaxWidth = 400.dp
 private val ThumbnailCornerSize = 12.dp
 
+data class AuthorSharedTransitionKey(
+  val id: String,
+  val type: ElementType,
+) {
+  enum class ElementType {
+    Image,
+  }
+}
+
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun AuthorCard(
   author: Author,
   modifier: Modifier = Modifier,
-) {
+) = SharedElementTransitionScope {
   ElevatedCard(
     modifier = modifier,
   ) {
@@ -49,11 +62,7 @@ fun AuthorCard(
         .clip(RoundedCornerShape(ThumbnailCornerSize)),
     ) {
       val placeHolderResource = remember {
-        if (Random.nextBoolean()) {
-          Res.drawable.placeholder_man
-        } else {
-          Res.drawable.placeholder_woman
-        }
+        Res.drawable.placeholder_person
       }
 
       val painter = rememberAsyncImagePainter(
@@ -77,7 +86,19 @@ fun AuthorCard(
         contentDescription = author.name,
         contentScale = ContentScale.Crop,
         modifier = Modifier
-          .fillMaxSize(),
+          .fluentIf<Modifier>(findAnimatedScope(SharedElementTransitionScope.AnimatedScope.Navigation) != null) {
+            sharedElement(
+              sharedContentState = rememberSharedContentState(
+                AuthorSharedTransitionKey(
+                  id = author.id,
+                  type = AuthorSharedTransitionKey.ElementType.Image,
+                ),
+              ),
+              animatedVisibilityScope = requireAnimatedScope(SharedElementTransitionScope.AnimatedScope.Navigation),
+            )
+          }
+          .fillMaxSize()
+          .clip(RoundedCornerShape(ThumbnailCornerSize)),
       )
     }
     Column(
@@ -90,14 +111,12 @@ fun AuthorCard(
         text = author.name,
         style = MaterialTheme.typography.titleSmall,
         maxLines = 1,
-//        modifier = Modifier.basicMarquee(),
       )
-      author.description?.let {
+      author.numBooks?.let {
         Text(
-          text = it,
+          text = pluralStringResource(Res.plurals.filter_bar_book_count, it, it),
           style = MaterialTheme.typography.bodySmall,
           maxLines = 1,
-//          modifier = Modifier.basicMarquee(),
         )
       }
     }
@@ -113,11 +132,7 @@ private fun PlaceholderImage(
       .fillMaxSize(),
   ) {
     val placeHolderResource = remember {
-      if (Random.nextBoolean()) {
-        Res.drawable.placeholder_man
-      } else {
-        Res.drawable.placeholder_woman
-      }
+      Res.drawable.placeholder_person
     }
     Image(
       painterResource(placeHolderResource),

@@ -1,5 +1,6 @@
 package app.campfire.libraries.ui.detail
 
+import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -19,8 +20,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material.icons.rounded.Cast
+import androidx.compose.material.icons.rounded.LibraryAdd
 import androidx.compose.material.icons.rounded.MoreVert
-import androidx.compose.material.icons.rounded.QueuePlayNext
 import androidx.compose.material.icons.rounded.Timer
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -57,10 +58,13 @@ import app.campfire.common.compose.theme.PaytoneOneFontFamily
 import app.campfire.common.compose.widgets.CampfireTopAppBar
 import app.campfire.common.compose.widgets.CoverImage
 import app.campfire.common.compose.widgets.ErrorListState
+import app.campfire.common.compose.widgets.LibraryItemSharedTransitionKey
 import app.campfire.common.compose.widgets.LoadingListState
 import app.campfire.common.compose.widgets.MetadataHeader
+import app.campfire.core.Platform
 import app.campfire.core.coroutines.LoadState
 import app.campfire.core.coroutines.onLoaded
+import app.campfire.core.currentPlatform
 import app.campfire.core.di.UserScope
 import app.campfire.core.extensions.seconds
 import app.campfire.core.model.Chapter
@@ -84,17 +88,20 @@ import campfire.features.libraries.ui.generated.resources.header_chapters
 import campfire.features.libraries.ui.generated.resources.placeholder_book
 import campfire.features.libraries.ui.generated.resources.unknown_title
 import com.r0adkll.kimchi.circuit.annotations.CircuitInject
+import com.slack.circuit.sharedelements.SharedElementTransitionScope
 import kotlin.time.Duration.Companion.milliseconds
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @CircuitInject(LibraryItemScreen::class, UserScope::class)
 @Composable
 fun LibraryItem(
+  screen: LibraryItemScreen,
   state: LibraryItemUiState,
   addToCollectionDialog: AddToCollectionDialog,
   modifier: Modifier = Modifier,
-) {
+) = SharedElementTransitionScope {
   val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
 
   var showAddToCollectionDialog by remember { mutableStateOf(false) }
@@ -115,15 +122,21 @@ fun LibraryItem(
           }
         },
         actions = {
-          IconButton(
-            onClick = {},
-          ) {
-            Icon(Icons.Rounded.QueuePlayNext, contentDescription = null)
+          if (currentPlatform == Platform.ANDROID) {
+            IconButton(
+              onClick = {
+                // TODO: Implement ChromeCast integration
+              },
+            ) {
+              Icon(Icons.Rounded.Cast, contentDescription = null)
+            }
           }
           IconButton(
-            onClick = {},
+            onClick = {
+              showAddToCollectionDialog = true
+            },
           ) {
-            Icon(Icons.Rounded.Cast, contentDescription = null)
+            Icon(Icons.Rounded.LibraryAdd, contentDescription = null)
           }
           IconButton(
             onClick = {},
@@ -145,12 +158,19 @@ fun LibraryItem(
       LoadState.Loading -> LoadingListState(Modifier.padding(paddingValues))
       is LoadState.Loaded<out LibraryItem> -> LoadedState(
         item = contentState.data,
+        sharedTransitionKey = screen.sharedTransitionKey,
         seriesContentState = state.seriesContentState,
         mediaProgressState = state.mediaProgressState,
         offlineDownload = state.offlineDownloadState,
         showTimeInBook = state.showTimeInBook,
         modifier = modifier,
         contentPadding = paddingValues,
+        onAuthorClick = {
+          state.eventSink(LibraryItemUiEvent.AuthorClick(contentState.data))
+        },
+        onNarratorClick = {
+          state.eventSink(LibraryItemUiEvent.NarratorClick(contentState.data))
+        },
         onChapterClick = { chapter ->
           state.eventSink(LibraryItemUiEvent.ChapterClick(contentState.data, chapter))
         },
@@ -172,11 +192,6 @@ fun LibraryItem(
         },
         onSeriesClick = {
           state.eventSink(LibraryItemUiEvent.SeriesClick(contentState.data))
-        },
-        onAddToPlaylist = {
-        },
-        onAddToCollection = {
-          showAddToCollectionDialog = true
         },
         onMarkFinished = {
           state.eventSink(LibraryItemUiEvent.MarkFinished(contentState.data))
@@ -227,13 +242,17 @@ fun LibraryItem(
   }
 }
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun LoadedState(
   item: LibraryItem,
+  sharedTransitionKey: String,
   seriesContentState: LoadState<out List<LibraryItem>>,
   mediaProgressState: LoadState<out MediaProgress?>,
   showTimeInBook: Boolean,
   offlineDownload: OfflineDownload?,
+  onAuthorClick: () -> Unit,
+  onNarratorClick: () -> Unit,
   onChapterClick: (Chapter) -> Unit,
   onPlayClick: () -> Unit,
   onDownloadClick: () -> Unit,
@@ -242,14 +261,12 @@ fun LoadedState(
   onMarkFinished: () -> Unit,
   onMarkNotFinished: () -> Unit,
   onDiscardProgress: () -> Unit,
-  onAddToPlaylist: () -> Unit,
-  onAddToCollection: () -> Unit,
   onSeriesClick: () -> Unit,
   onTimeInBookChange: (Boolean) -> Unit,
   modifier: Modifier = Modifier,
   contentPadding: PaddingValues = PaddingValues(),
   scrollState: ScrollState = rememberScrollState(),
-) {
+) = SharedElementTransitionScope {
   Column(
     modifier = modifier
       .fillMaxSize()
@@ -264,6 +281,16 @@ fun LoadedState(
         .fillMaxWidth()
         .padding(
           vertical = 16.dp,
+        ),
+      sharedElementModifier = Modifier
+        .sharedElement(
+          sharedContentState = rememberSharedContentState(
+            LibraryItemSharedTransitionKey(
+              id = sharedTransitionKey,
+              type = LibraryItemSharedTransitionKey.ElementType.Image,
+            ),
+          ),
+          animatedVisibilityScope = requireAnimatedScope(SharedElementTransitionScope.AnimatedScope.Navigation),
         ),
     )
 
@@ -320,6 +347,8 @@ fun LoadedState(
 
     AuthorNarratorBar(
       metadata = item.media.metadata,
+      onAuthorClick = onAuthorClick,
+      onNarratorClick = onNarratorClick,
     )
 
     Spacer(Modifier.height(24.dp))
@@ -345,8 +374,6 @@ fun LoadedState(
       onMarkFinished = onMarkFinished,
       onMarkNotFinished = onMarkNotFinished,
       onDiscardProgress = onDiscardProgress,
-      onAddToPlaylist = onAddToPlaylist,
-      onAddToCollection = onAddToCollection,
       modifier = Modifier
         .padding(horizontal = 16.dp),
     )
