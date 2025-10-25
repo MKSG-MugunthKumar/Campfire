@@ -30,6 +30,19 @@ class CampfireSettingsImpl(
 
   @OptIn(ExperimentalUuidApi::class)
   override var deviceId: String by stringSetting(KEY_DEVICE_ID) { Uuid.random().toString() }
+  override var analyticsId: String by stringSetting(KEY_ANALYTICS_ID) { Uuid.random().toString() }
+
+  // These are user opt-in, so default false
+  override var hasEverConsented: Boolean by booleanSetting(KEY_HAS_CONSENTED, false)
+  override var crashReportingEnabled: Boolean by booleanSetting(KEY_CRASH_REPORTING, true)
+  override fun observeCrashReportingEnabled(): Flow<Boolean> {
+    return flowSettings.getBooleanFlow(KEY_CRASH_REPORTING, crashReportingEnabled)
+  }
+
+  override var analyticReportingEnabled: Boolean by booleanSetting(KEY_ANALYTIC_REPORTING, false)
+  override fun observeAnalyticReportingEnabled(): Flow<Boolean> {
+    return flowSettings.getBooleanFlow(KEY_ANALYTIC_REPORTING, analyticReportingEnabled)
+  }
 
   override var theme: Theme by enumSetting(KEY_THEME, Theme)
   override fun observeTheme(): Flow<Theme> {
@@ -38,7 +51,7 @@ class CampfireSettingsImpl(
 
   override var useDynamicColors: Boolean by booleanSetting(KEY_USE_DYNAMIC_COLORS, false)
   override fun observeUseDynamicColors(): Flow<Boolean> {
-    return flowSettings.getBooleanFlow(KEY_USE_DYNAMIC_COLORS, false)
+    return flowSettings.getBooleanFlow(KEY_USE_DYNAMIC_COLORS, useDynamicColors)
   }
 
   override var libraryItemDisplayState: ItemDisplayState
@@ -79,6 +92,10 @@ class CampfireSettingsImpl(
 }
 
 internal const val KEY_DEVICE_ID = "pref_device_id"
+internal const val KEY_ANALYTICS_ID = "pref_analytics_id"
+internal const val KEY_HAS_CONSENTED = "pref_has_consented"
+internal const val KEY_CRASH_REPORTING = "pref_crash_reporting"
+internal const val KEY_ANALYTIC_REPORTING = "pref_analytic_reporting"
 internal const val KEY_THEME = "pref_theme"
 internal const val KEY_USE_DYNAMIC_COLORS = "pref_dynamic_colors"
 internal const val KEY_LIBRARY_ITEM_DISPLAY_STATE = "pref_library_item_display_state"

@@ -11,6 +11,15 @@ import kotlinx.coroutines.flow.Flow
 interface CampfireSettings {
 
   var deviceId: String
+  var analyticsId: String
+
+  var hasEverConsented: Boolean
+
+  var crashReportingEnabled: Boolean
+  fun observeCrashReportingEnabled(): Flow<Boolean>
+
+  var analyticReportingEnabled: Boolean
+  fun observeAnalyticReportingEnabled(): Flow<Boolean>
 
   var theme: Theme
   fun observeTheme(): Flow<Theme>

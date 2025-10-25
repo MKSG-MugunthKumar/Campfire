@@ -1,7 +1,9 @@
 package app.campfire.common.di
 
+import app.campfire.auth.api.screen.AnalyticConsentScreen
 import app.campfire.common.screens.BaseScreen
-import app.campfire.common.screens.rootScreen
+import app.campfire.common.screens.HomeScreen
+import app.campfire.common.screens.WelcomeScreen
 import app.campfire.core.coroutines.CoroutineScopeHolder
 import app.campfire.core.di.AppScope
 import app.campfire.core.di.Scoped
@@ -13,6 +15,8 @@ import app.campfire.core.session.UserSession
 import app.campfire.sessions.api.SessionsRepository
 import com.r0adkll.kimchi.annotations.ContributesSubcomponent
 import com.slack.circuit.foundation.Circuit
+import com.slack.circuitx.navigation.intercepting.NavigationEventListener
+import kotlinx.collections.immutable.ImmutableList
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -27,7 +31,10 @@ interface UserComponent {
   val scopedDependencies: Lazy<Set<Scoped>>
 
   val currentUserSession: UserSession
+
+  // Expose the circuit information for UiScope
   val circuit: Circuit
+  val navigationEventListeners: ImmutableList<NavigationEventListener>
 
   @get:RootScreen
   val rootScreen: BaseScreen
@@ -40,7 +47,10 @@ interface UserComponent {
   @Provides @RootScreen
   @SingleIn(UserScope::class)
   fun provideRootScreen(userSession: UserSession): BaseScreen {
-    return userSession.rootScreen
+    return when (userSession) {
+      is UserSession.LoggedIn -> if (userSession.showAnalyticsConsent) AnalyticConsentScreen else HomeScreen
+      else -> WelcomeScreen
+    }
   }
 
   @Provides

@@ -26,7 +26,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.lerp
+import app.campfire.analytics.Analytics
+import app.campfire.analytics.events.Changed
+import app.campfire.analytics.events.PlaybackActionEvent
+import app.campfire.analytics.events.ScreenType
+import app.campfire.analytics.events.ScreenViewEvent
+import app.campfire.analytics.events.Speed
 import app.campfire.audioplayer.AudioPlayerHolder
+import app.campfire.common.compose.analytics.Impression
 import app.campfire.core.di.AppScope
 import app.campfire.core.di.ComponentHolder
 import app.campfire.core.extensions.toString
@@ -56,6 +63,10 @@ suspend fun OverlayHost.showPlaybackSpeedBottomSheet(speed: Float) {
       ),
       skipPartiallyExpandedState = true,
     ) { s, _ ->
+      Impression {
+        ScreenViewEvent("PlaybackSpeed", ScreenType.Overlay)
+      }
+
       PlaybackSpeedBottomSheet(
         speed = s,
         modifier = Modifier.navigationBarsPadding(),
@@ -111,6 +122,7 @@ private fun PlaybackSpeedBottomSheet(
           selected = isCurrentSpeed,
           label = { Text("${defaultSpeed.readable}x") },
           onClick = {
+            Analytics.send(PlaybackActionEvent(Speed, Changed, extras = mapOf("speed" to defaultSpeed)))
             component.audioPlayerHolder.currentPlayer.value
               ?.setPlaybackSpeed(defaultSpeed)
           },
@@ -146,6 +158,7 @@ private fun PlaybackSpeedBottomSheet(
         valueRange = speedOptions.asRange,
         onValueChange = {
           sliderValue = it
+          Analytics.send(PlaybackActionEvent(Speed, Changed, extras = mapOf("speed" to it)))
           component.audioPlayerHolder.currentPlayer.value?.setPlaybackSpeed(it)
         },
         waveLength = waveLength,

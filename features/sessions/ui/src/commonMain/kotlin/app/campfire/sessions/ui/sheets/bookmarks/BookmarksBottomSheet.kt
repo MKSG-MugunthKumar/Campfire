@@ -56,7 +56,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
+import app.campfire.analytics.Analytics
+import app.campfire.analytics.events.Bookmark as BookmarkObj
+import app.campfire.analytics.events.Created
+import app.campfire.analytics.events.Deleted
+import app.campfire.analytics.events.PlaybackActionEvent
+import app.campfire.analytics.events.ScreenType
+import app.campfire.analytics.events.ScreenViewEvent
 import app.campfire.audioplayer.AudioPlayerHolder
+import app.campfire.common.compose.analytics.Impression
 import app.campfire.common.compose.di.rememberComponent
 import app.campfire.common.compose.extensions.readoutFormat
 import app.campfire.common.compose.icons.rounded.Bookmark
@@ -118,6 +126,10 @@ suspend fun OverlayHost.showBookmarksBottomSheet(libraryItemId: LibraryItemId): 
       sheetShape = bottomSheetShape,
       skipPartiallyExpandedState = true,
     ) { id, overlayNavigator ->
+      Impression {
+        ScreenViewEvent("Bookmarks", ScreenType.Overlay)
+      }
+
       SessionSheetLayout(
         title = { Text(stringResource(Res.string.bookmark_bottomsheet_title)) },
       ) {
@@ -169,7 +181,9 @@ private fun BookmarksBottomSheet(
               },
               onDeleteClick = {
                 scope.launch {
-                  component.bookmarkRepository.removeBookmark(bookmark.libraryItemId, bookmark.time)
+                  Analytics.send(PlaybackActionEvent(BookmarkObj, Deleted))
+                  component.bookmarkRepository
+                    .removeBookmark(bookmark.libraryItemId, bookmark.time)
                 }
               },
               modifier = Modifier.animateItem(),
@@ -235,6 +249,7 @@ private fun BookmarksBottomSheet(
       onDismiss = { showCreateDialog = null },
       onCreate = { title, timestamp ->
         scope.launch {
+          Analytics.send(PlaybackActionEvent(BookmarkObj, Created))
           component.bookmarkRepository
             .createBookmark(
               libraryItemId = libraryItemId,
