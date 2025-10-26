@@ -6,7 +6,10 @@
 
 **Campfire** is an unofficial app for [Audiobookshelf](https://www.audiobookshelf.org/) built in Kotlin/Compose Multiplatform for a more native experience than the official app.
 
-## This is a **WIP** project and no timeline will be given at this point in time
+> [!IMPORTANT]
+> This is a **WIP** project and no timeline will be given at this point in time
+
+## Tech Stack
 
 * [Kotlin Multiplatform][kotlin-multiplatform]
 * [Jetbrains Compose Multiplatform][compose-multiplatform]
@@ -18,6 +21,9 @@
 * Dependency Injection
   * [kotlin-inject][kinject]
   * [kimchi][kimchi]
+* Analytics
+  * [MixPanel][mix-panel]
+  * [Firebase][firebase]
 
 [kotlin-multiplatform]: https://kotlinlang.org/docs/multiplatform.html
 [compose-multiplatform]: https://www.jetbrains.com/lp/compose-multiplatform/
@@ -27,6 +33,11 @@
 [store]: https://github.com/MobileNativeFoundation/Store
 [kinject]: https://github.com/evant/kotlin-inject
 [kimchi]: https://github.com/r0adkll/kimchi
+[mix-panel]: https://docs.mixpanel.com/docs/tracking-methods/sdks/android
+[firebase]: https://firebase.google.com/
+
+## Architecture
+Head over to [Architecture](docs/Architecture.md) for more detailed information on the architecture of this project.
 
 ## Contributing
 
