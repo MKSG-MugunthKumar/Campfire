@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Improved UI performance during playback
+- Playback speed now displays down to the hundredth place
 - Improved sleep timer display of long chapters
 - Chapter time in the playback UI scales with playback speed
 
