@@ -16,6 +16,7 @@ android {
   flavorDimensions += "default"
   productFlavors {
     create("standard") { dimension = "default" }
+    create("alpha") { dimension = "default" }
     create("beta") { dimension = "default" }
   }
 
@@ -38,7 +39,7 @@ android {
 // You can specify to run the generators on a managed devices or connected devices.
 baselineProfile {
   managedDevices += "pixel6Api34"
-  useConnectedDevices = false
+  useConnectedDevices = true
   // Uncomment this to enable the emulator display for testing
   // enableEmulatorDisplay = true
 }
