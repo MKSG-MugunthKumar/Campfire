@@ -12,16 +12,17 @@ import app.campfire.audioplayer.offline.OfflineDownloadManager
 import app.campfire.common.screens.AuthorDetailScreen
 import app.campfire.common.screens.HomeScreen
 import app.campfire.common.screens.SeriesDetailScreen
-import app.campfire.core.coroutines.LoadState
 import app.campfire.core.di.UserScope
 import app.campfire.core.model.LibraryItem
+import app.campfire.home.api.HomeFeedResponse
 import app.campfire.home.api.HomeRepository
 import app.campfire.libraries.api.screen.LibraryItemScreen
 import com.r0adkll.kimchi.circuit.annotations.CircuitInject
 import com.slack.circuit.runtime.Navigator
 import com.slack.circuit.runtime.presenter.Presenter
+import kotlinx.collections.immutable.persistentMapOf
+import kotlinx.collections.immutable.toPersistentMap
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
@@ -42,9 +43,21 @@ class HomePresenter(
   override fun present(): HomeUiState {
     val feed by remember {
       homeRepository.observeHomeFeed()
-        .map { LoadState.Loaded(it) }
-        .catch { LoadState.Error }
-    }.collectAsState(LoadState.Loading)
+    }.collectAsState(HomeFeedResponse.Loading)
+
+    val userMediaProgress by remember {
+      snapshotFlow { feed.dataOrNull }
+        .filterNotNull()
+        .flatMapLatest { shelves ->
+          val libraryItemIds = shelves
+            .flatMap { it.entities }
+            .filterIsInstance<LibraryItem>()
+            .map { it.id }
+
+          homeRepository.observeMediaProgress(libraryItemIds)
+            .map { it.toPersistentMap() }
+        }
+    }.collectAsState(persistentMapOf())
 
     val offlineDownloads by remember {
       snapshotFlow { feed.dataOrNull }
@@ -54,12 +67,14 @@ class HomePresenter(
             .flatMap { it.entities }
             .filterIsInstance<LibraryItem>()
           offlineDownloadManager.observeForItems(libraryItems)
+            .map { it.toPersistentMap() }
         }
-    }.collectAsState(emptyMap())
+    }.collectAsState(persistentMapOf())
 
     return HomeUiState(
       homeFeed = feed,
       offlineStates = offlineDownloads,
+      progressStates = userMediaProgress,
     ) { event ->
       when (event) {
         is HomeUiEvent.OpenLibraryItem -> {
