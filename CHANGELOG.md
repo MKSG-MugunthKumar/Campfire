@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+### Changed
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Other Notes & Contributions
+
+## [0.6.0-beta] - 2025-10-30
+
+### Added
+
 - Usage analytics via MixPanel (Android Only)
 - Reporting consent screen to opt-out of developer and usage reporting
 - More debugging to help diagnose infinite loading screens
@@ -17,10 +31,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Disabled Firebase in debug builds
 - Capitalize "Chapter" in all "End of Chapter" text
-
-### Deprecated
-
-### Removed
 
 ### Fixed
 
@@ -33,6 +43,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - In-app updating via Firebase App Distribution for beta and alpha builds
 
 ### Other Notes & Contributions
+
+- Reached database stability. From this release onwards re-installs won't be required.
 
 ## [0.5.0-alpha] - 2025-10-12
 
@@ -121,6 +133,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial Alpha Release.
 
+[0.6.0-beta]: https://github.com/r0adkll/Campfire/compare/v0.5.0-alpha...v0.6.0-beta
 [0.5.0-alpha]: https://github.com/r0adkll/Campfire/compare/v0.4.0-alpha...v0.5.0-alpha
 [0.4.0-alpha]: https://github.com/r0adkll/Campfire/compare/v0.3.0-alpha...v0.4.0-alpha
 [0.3.0-alpha]: https://github.com/r0adkll/Campfire/compare/v0.2.1-alpha...v0.3.0-alpha
