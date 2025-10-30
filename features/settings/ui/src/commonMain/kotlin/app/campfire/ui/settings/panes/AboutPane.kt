@@ -21,7 +21,6 @@ import app.campfire.common.compose.toast.LocalToast
 import app.campfire.common.compose.toast.Toast
 import app.campfire.common.compose.toast.ToastHandle
 import app.campfire.core.app.ApplicationInfo
-import app.campfire.core.app.Flavor
 import app.campfire.ui.settings.SettingsUiEvent
 import app.campfire.ui.settings.SettingsUiEvent.AboutSettingEvent.AttributionsClick
 import app.campfire.ui.settings.SettingsUiEvent.AboutSettingEvent.DeveloperClick
@@ -163,10 +162,7 @@ internal const val DEVELOPER_MODE_CLICK_TIMEOUT = 1500L
 
 private val ApplicationInfo.settingsReadableVersionName: String get() {
   return buildString {
-    append(versionName).append(".")
-    append(versionCode.toString())
-    if (flavor != Flavor.Standard) {
-      append("-${flavor.name}")
-    }
+    append(versionName).append(" ")
+    append("($versionCode)")
   }
 }
