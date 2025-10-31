@@ -19,6 +19,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Other Notes & Contributions
 
+## [0.6.1-beta] - 2025-10-30
+
+### Fixed
+
+- Fixed issue with how data was being parsed on the home feed
+
 ## [0.6.0-beta] - 2025-10-30
 
 ### Added
