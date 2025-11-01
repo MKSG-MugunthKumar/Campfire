@@ -19,6 +19,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Other Notes & Contributions
 
+## [0.6.2-beta] - 2025-10-31
+
+## Fixed
+
+- Fixed model parsing in Home feed and collection views
+- Fixed crashing when pressing system back button
+
 ## [0.6.1-beta] - 2025-10-30
 
 ### Fixed
