@@ -35,6 +35,10 @@ class MainActivity : ComponentActivity() {
         ComponentHolder.updateComponent(lifecycleScope, it)
       }
 
+    // Initialize the CastContext used for Google Cast
+    // https://developers.google.com/cast/docs/android_sender/integrate#kotlin
+    component.mediaRouterCastController.initialize()
+
     WindowCompat.setDecorFitsSystemWindows(window, false)
 
     val toaster = AndroidToast(this)
@@ -70,6 +74,7 @@ class MainActivity : ComponentActivity() {
   override fun onDestroy() {
     super.onDestroy()
     bark { "MainActivity::onDestroy()" }
+    component.mediaRouterCastController.destroy()
   }
 }
 
