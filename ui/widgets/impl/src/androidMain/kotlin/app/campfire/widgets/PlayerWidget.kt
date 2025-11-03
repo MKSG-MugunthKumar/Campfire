@@ -4,6 +4,7 @@ import android.content.ComponentName
 import android.content.Context
 import android.os.Build
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -51,7 +52,9 @@ import com.r0adkll.kimchi.annotations.ContributesTo
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.mapNotNull
 
 @ContributesTo(UserScope::class)
 interface PlayerWidgetComponent {
@@ -89,6 +92,13 @@ class PlayerWidget : GlanceAppWidget() {
     }
   }
 
+  @Immutable
+  data class SessionLite(
+    val id: String,
+    val title: String,
+    val libraryItem: LibraryItem,
+  )
+
   @Composable
   private fun PlayerWidgetContent(
     widgetSizeClass: WidgetSizeClass,
@@ -109,7 +119,18 @@ class PlayerWidget : GlanceAppWidget() {
     }
 
     val currentSession by remember(component) {
-      component?.sessionsRepository?.observeCurrentSession() ?: emptyFlow()
+      component?.sessionsRepository?.observeCurrentSession()
+        ?.mapNotNull { session ->
+          session?.let { s ->
+            SessionLite(
+              id = s.id.toHexDashString(),
+              title = s.chapter.title,
+              libraryItem = s.libraryItem,
+            )
+          }
+        }
+        ?.distinctUntilChanged()
+        ?: emptyFlow()
     }.collectAsState(null)
 
     val audioPlayer by remember(component) {
@@ -134,7 +155,7 @@ class PlayerWidget : GlanceAppWidget() {
       val playbackSpeed = currentState(KEY_PLAYBACK_SPEED) ?: 1f
 
       ActiveWidgetContent(
-        title = currentMetadata.value.title ?: currentSession!!.chapter.title,
+        title = currentMetadata.value.title ?: currentSession!!.title,
         subtitle = currentSession!!.libraryItem.media.metadata.title ?: "",
         artworkUrl = currentMetadata.value.artworkUri ?: currentSession!!.libraryItem.media.coverImageUrl,
         playbackState = state.value,
