@@ -45,6 +45,7 @@ import app.campfire.audioplayer.offline.OfflineDownload.State.Stopped
 import app.campfire.common.compose.icons.CampfireIcons
 import app.campfire.common.compose.icons.rounded.Download
 import app.campfire.common.compose.widgets.CoverImage
+import app.campfire.core.extensions.asReadableBytes
 import app.campfire.core.extensions.ifNotEmpty
 import app.campfire.core.model.LibraryItem
 import app.campfire.core.model.LibraryItemId
@@ -173,7 +174,17 @@ private fun ConfirmDeleteListItem(
       contentPadding = ButtonDefaults.ButtonWithIconContentPadding,
     ) {
       Icon(
-        Icons.Rounded.DeleteForever,
+        when (download.state) {
+          Queued,
+          Downloading,
+          -> Icons.Rounded.Dangerous
+
+          Stopped,
+          Completed,
+          Failed,
+          None,
+          -> Icons.Rounded.DeleteForever
+        },
         contentDescription = null,
         modifier = Modifier.size(ButtonDefaults.IconSize),
       )
@@ -205,7 +216,7 @@ private fun ItemDownloadListItem(
 ) {
   ActionSetting(
     headlineContent = { Text(item.media.metadata.title ?: "<unknown item>") },
-    supportingContent = item.media.metadata.authorName?.let { { Text(it) } },
+    supportingContent = { Text(item.media.sizeInBytes.asReadableBytes()) },
     leadingContent = {
       ItemDownloadImage(
         item = item,
