@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+### Changed
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Other Notes & Contributions
+
+## [0.7.0-beta] - 2025-11-06
+
+### Added
+
 - Support for Google Cast
 - Manage offline downloads in settings screen
 
@@ -19,17 +33,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - In-app update now shows progress
 - "Mark as (Not) Finished" is always visible
 
-### Deprecated
-
-### Removed
-
 ### Fixed
 
 - Opening/Closing foldables no properly manages detail screens.
 - Screen jank when app widget is present and playing a book
 - How the homescreen loads its data leading to blank / flickering items
-
-### Other Notes & Contributions
 
 ## [0.6.2-beta] - 2025-10-31
 
@@ -158,6 +166,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial Alpha Release.
 
+[0.7.0-beta]: https://github.com/r0adkll/Campfire/compare/v0.6.2-beta...v0.7.0-beta
 [0.6.2-beta]: https://github.com/r0adkll/Campfire/compare/v0.6.1-beta...v0.6.2-beta
 [0.6.1-beta]: https://github.com/r0adkll/Campfire/compare/v0.6.0-alpha...v0.6.1-beta
 [0.6.0-beta]: https://github.com/r0adkll/Campfire/compare/v0.5.0-alpha...v0.6.0-beta
