@@ -19,6 +19,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Other Notes & Contributions
 
+## [0.7.1-beta] - 2025-11-06
+
+### Fixed
+
+- Gracefully handle Cast/PlayService integrations on devices that don't have Google/Play Services
+
 ## [0.7.0-beta] - 2025-11-06
 
 ### Added
