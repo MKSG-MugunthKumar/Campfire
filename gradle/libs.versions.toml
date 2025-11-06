@@ -15,7 +15,7 @@ clikt = "5.0.3"
 core-ktx = "1.17.0"
 coroutines = "1.10.2"
 # TODO: 1.9.1+ breaks Wavy Slider - TODO: Update to support M3 Expressive
-compose-multiplatform = "1.9.2"
+compose-multiplatform = "1.9.0"
 connectivity = "2.3.0"
 coil = "3.3.0"
 circuit = "0.31.0"
@@ -139,9 +139,7 @@ multiplatformsettings-coroutines = { module = "com.russhwolf:multiplatform-setti
 
 compose-material3-windowsizeclass = "com.r0adkll.material3:material3-window-size-class-multiplatform:0.1.0"
 materialcolorsutilities = "dev.sasikanth:material-color-utilities:1.0.0-alpha01"
-# TODO: Replace this with actual artifact once new release is published
-#  this is to unblock updates to CMP 1.9.2+ and Circuit v0.31+
-wavy-slider = "com.r0adkll.wavyslider:wavy-slider:2.2.0-SNAPSHOT"
+wavy-slider = "ir.mahozad.multiplatform:wavy-slider:2.1.0"
 compose-rich-text = "com.mohamedrejeb.richeditor:richeditor-compose:1.0.0-rc13"
 
 # Kotlin

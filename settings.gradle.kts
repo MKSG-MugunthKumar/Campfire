@@ -1,5 +1,3 @@
-import java.net.URI
-
 pluginManagement {
   includeBuild("gradle/build-logic")
 
@@ -10,14 +8,9 @@ pluginManagement {
   repositories {
 
     if (hasProperty("campfire.config.enableSnapshots")) {
-      maven {
-        name = "Central Portal Snapshots"
-        url = java.net.URI("https://central.sonatype.com/repository/maven-snapshots/")
-
-        // Only search this repository for the specific dependency
-        content {
-          includeGroup("com.r0adkll.wavyslider")
-        }
+      maven("https://oss.sonatype.org/content/repositories/snapshots") {
+        name = "snapshots-maven-central"
+        mavenContent { snapshotsOnly() }
       }
     }
 
@@ -39,14 +32,9 @@ dependencyResolutionManagement {
 
   repositories {
     if (hasProperty("campfire.config.enableSnapshots")) {
-      maven {
-        name = "Central Portal Snapshots"
-        url = URI("https://central.sonatype.com/repository/maven-snapshots/")
-
-        // Only search this repository for the specific dependency
-        content {
-          includeGroup("com.r0adkll.wavyslider")
-        }
+      maven("https://oss.sonatype.org/content/repositories/snapshots") {
+        name = "snapshots-maven-central"
+        mavenContent { snapshotsOnly() }
       }
     }
 
