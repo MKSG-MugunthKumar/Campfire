@@ -8,6 +8,7 @@ import com.slack.circuit.runtime.Navigator
 import com.slack.circuit.runtime.popUntil
 import com.slack.circuit.runtime.screen.PopResult
 import com.slack.circuit.runtime.screen.Screen
+import kotlinx.collections.immutable.ImmutableList
 
 class HomeNavigator(
   private val windowSizeClass: WindowSizeClass,
@@ -28,15 +29,15 @@ class HomeNavigator(
 
   override fun peek(): Screen? = rootNavigator.peek()
 
-  override fun peekBackStack(): List<Screen> = rootNavigator.peekBackStack()
+  override fun peekBackStack(): ImmutableList<Screen> = rootNavigator.peekBackStack()
 
   override fun pop(result: PopResult?): Screen? = rootNavigator.pop()
 
-  override fun resetRoot(newRoot: Screen, options: Navigator.StateOptions): List<Screen> {
+  override fun resetRoot(newRoot: Screen, saveState: Boolean, restoreState: Boolean): ImmutableList<Screen> {
     return if (isSupportingPaneEnabled && newRoot is DetailScreen) {
-      detailNavigator.resetRoot(newRoot, options)
+      detailNavigator.resetRoot(newRoot, saveState, restoreState)
     } else {
-      rootNavigator.resetRoot(newRoot, options)
+      rootNavigator.resetRoot(newRoot, saveState, restoreState)
     }
   }
 }
