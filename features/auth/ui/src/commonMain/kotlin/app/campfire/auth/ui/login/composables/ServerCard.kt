@@ -48,6 +48,11 @@ import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.FocusRequester.Companion.FocusRequesterFactory.component1
+import androidx.compose.ui.focus.FocusRequester.Companion.FocusRequesterFactory.component2
+import androidx.compose.ui.focus.FocusRequester.Companion.FocusRequesterFactory.component3
+import androidx.compose.ui.focus.FocusRequester.Companion.FocusRequesterFactory.component4
+import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.semantics.contentType
 import androidx.compose.ui.semantics.semantics
@@ -98,11 +103,14 @@ internal fun ServerCard(
   isAuthenticating: Boolean,
   modifier: Modifier = Modifier,
 ) = SharedElementTransitionScope {
-  val focusRequester = remember { FocusRequester() }
+  val (serverNameFocus, serverUrlFocus, usernameFocus, passwordFocus) = remember { FocusRequester.createRefs() }
 
   LaunchedEffect(isAuthenticating) {
     if (isAuthenticating) {
-      focusRequester.freeFocus()
+      serverNameFocus.freeFocus()
+      serverUrlFocus.freeFocus()
+      usernameFocus.freeFocus()
+      passwordFocus.freeFocus()
     }
   }
 
@@ -121,6 +129,7 @@ internal fun ServerCard(
       onTentChange = onTentChange,
       name = serverName,
       onNameChange = onServerNameChange,
+      focusRequester = serverNameFocus,
       modifier = Modifier.padding(
         start = 16.dp,
         end = 16.dp,
@@ -164,12 +173,18 @@ internal fun ServerCard(
       },
       keyboardOptions = KeyboardOptions(
         keyboardType = KeyboardType.Uri,
+        autoCorrectEnabled = true,
         imeAction = ImeAction.Next,
       ),
+      singleLine = true,
       modifier = Modifier
         .fillMaxWidth()
         .padding(16.dp)
-        .focusRequester(focusRequester),
+        .focusRequester(serverUrlFocus)
+        .focusProperties {
+          previous = serverNameFocus
+          next = usernameFocus
+        },
     )
 
     AnimatedVisibility(
@@ -193,6 +208,11 @@ internal fun ServerCard(
           ),
           modifier = Modifier
             .fillMaxWidth()
+            .focusRequester(usernameFocus)
+            .focusProperties {
+              previous = serverUrlFocus
+              next = passwordFocus
+            }
             .semantics {
               contentType = ContentType.Username
             },
@@ -226,7 +246,7 @@ internal fun ServerCard(
           ),
           modifier = Modifier
             .fillMaxWidth()
-            .focusRequester(focusRequester)
+            .focusRequester(passwordFocus)
             .semantics {
               contentType = ContentType.Password
             },
@@ -258,6 +278,7 @@ private fun ServerNameAndIcon(
   onTentChange: (Tent) -> Unit,
   name: String,
   onNameChange: (String) -> Unit,
+  focusRequester: FocusRequester,
   modifier: Modifier = Modifier,
 ) = SharedElementTransitionScope {
   Row(
@@ -329,6 +350,8 @@ private fun ServerNameAndIcon(
           color = MaterialTheme.colorScheme.onSurface,
         ),
         singleLine = true,
+        modifier = Modifier
+          .focusRequester(focusRequester),
       )
       if (name.isEmpty()) {
         Text(
