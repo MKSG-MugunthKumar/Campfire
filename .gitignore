@@ -23,6 +23,7 @@ traces/
 .idea/compiler.xml
 .idea/jarRepositories.xml
 .idea/deploymentTargetDropDown.xml
+.idea/deploymentTargetSelector.xml
 .idea/androidTestResultsUserPreferences.xml
 .idea/artifacts
 gradle.xml
