@@ -27,6 +27,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@v5
+        with:
+          token: ${{ secrets.CAMPFIRE_BOT_PAT }}
+          ref: ${{ github.head_ref }}
 
       - name: Set up JDK
         uses: actions/setup-java@v5
@@ -39,10 +42,32 @@ jobs:
         uses: gradle/actions/setup-gradle@v5
 
       - name: Check convention plugins code style with Spotless
-        run: ./gradlew -p gradle/build-logic spotlessCheck
+        if: always()
+        run: ./gradlew -p gradle/build-logic spotlessApply
 
       - name: Check code style with Spotless
-        run: ./gradlew spotlessCheck
+        if: always()
+        run: ./gradlew spotlessApply
+
+      - name: Push changes to PR if exist
+        env:
+          IS_PULL_REQUEST: ${{ github.event_name == 'pull_request' }}
+        run: |
+          # If there are any changes from running spotlessApply, push to PR
+          if [[ $(git diff --stat .) != '' ]]; then
+            echo "Changes detected…"
+            # We only want to push changes to the branch if we are on a pull request
+            if [[ "$IS_PULL_REQUEST" == "true" ]]; then
+              echo "Pull Request, pushing changes to branch"
+              git config user.name Rotom-Bot
+              git config user.email veedubusc+deckbox@gmail.com
+              git commit -am "Automated Code Style Updates"
+              git push
+            fi
+
+            # If there are changes, always fail
+            exit 1
+          fi
 
   code-coverage:
     runs-on: ubuntu-latest
