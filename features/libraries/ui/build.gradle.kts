@@ -1,5 +1,6 @@
 plugins {
   id("app.campfire.ui")
+  alias(libs.plugins.burst)
 }
 
 kotlin {
@@ -15,22 +16,25 @@ kotlin {
         implementation(projects.features.user.api)
         implementation(projects.ui.appbar)
 
-        implementation(compose.components.resources)
-
         implementation(libs.circuitx.overlays)
         implementation(libs.compose.rich.text)
       }
     }
 
-    jvmMain {
+    commonTest {
       dependencies {
-        implementation(compose.preview)
+        implementation(projects.data.analytics.test)
+        implementation(projects.features.libraries.test)
+        implementation(projects.features.sessions.test)
+        implementation(projects.features.series.test)
+        implementation(projects.features.settings.test)
+        implementation(projects.features.user.test)
+        implementation(projects.infra.audioplayer.test)
       }
     }
 
     androidMain {
       dependencies {
-        implementation(compose.preview)
         implementation(libs.accompanist.permissions)
       }
     }

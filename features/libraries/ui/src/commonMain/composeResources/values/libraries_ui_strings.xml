@@ -37,6 +37,11 @@
     <item quantity="other">Genres</item>
   </plurals>
 
+  <plurals name="tags_title">
+    <item quantity="one">Tag</item>
+    <item quantity="other">Tags</item>
+  </plurals>
+
   <string name="header_chapters">Chapters</string>
 
   <string name="action_delete_offline">Delete</string>
@@ -79,4 +84,6 @@
   <string name="filter_value_tracks_single">Single-track</string>
   <string name="filter_value_tracks_multi">Multi-track</string>
 
+  <string name="cd_back_arrow">Back</string>
+  <string name="cd_add_to_collection">Add to collection</string>
 </resources>

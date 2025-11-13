@@ -1,6 +1,7 @@
 package app.campfire.libraries.ui.detail.composables
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -15,6 +16,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import app.campfire.analytics.Analytics
@@ -49,6 +51,8 @@ internal fun ItemDescription(
         isOverflowed = result.didOverflowHeight || isExpanded
       },
       modifier = Modifier
+        .fillMaxWidth()
+        .animateContentSize()
         .clickable(
           enabled = isOverflowed && !isExpanded,
           onClick = {
@@ -76,7 +80,9 @@ internal fun ItemDescription(
           Analytics.send(ActionEvent("item_description", "toggled", if (it) "Expand" else "Collapse"))
           isExpanded = it
         },
-        modifier = Modifier.padding(horizontal = 16.dp),
+        modifier = Modifier
+          .padding(horizontal = 16.dp)
+          .testTag("button_show_more_less"),
       )
     }
   }

@@ -1,5 +1,9 @@
 package app.campfire.libraries.ui.detail.composables
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.expandHorizontally
+import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -11,18 +15,15 @@ import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Backspace
-import androidx.compose.material.icons.rounded.DownloadDone
-import androidx.compose.material.icons.rounded.Downloading
-import androidx.compose.material.icons.rounded.ErrorOutline
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import app.campfire.audioplayer.offline.OfflineDownload
 import app.campfire.common.compose.icons.CampfireIcons
@@ -43,7 +44,6 @@ import org.jetbrains.compose.resources.stringResource
 internal fun ControlBar(
   mediaProgress: MediaProgress?,
   offlineDownload: OfflineDownload?,
-  isCurrentListening: Boolean,
   onPlayClick: () -> Unit,
   onDownloadClick: () -> Unit,
   onMarkFinished: () -> Unit,
@@ -61,26 +61,30 @@ internal fun ControlBar(
     Row(
       modifier = Modifier.fillMaxWidth(),
     ) {
-      val playButtonIcon = if (hasProgress) {
-        Icons.Outlined.Autoplay
-      } else {
-        Icons.Rounded.PlayArrow
-      }
+      val hasOfflineDownload = offlineDownload?.state != null &&
+        offlineDownload.state != OfflineDownload.State.None
 
       val splitButtonRadius = 4.dp
+      val endCornerRadius by animateDpAsState(
+        targetValue = if (hasOfflineDownload) 20.dp else splitButtonRadius,
+      )
 
       Button(
         onClick = onPlayClick,
-        enabled = !isCurrentListening,
-        modifier = Modifier.weight(1f),
+        modifier = Modifier
+          .weight(1f)
+          .testTag("button_play"),
         shape = RoundedCornerShape(
           topStart = CornerSize(50),
           bottomStart = CornerSize(50),
-          topEnd = CornerSize(splitButtonRadius),
-          bottomEnd = CornerSize(splitButtonRadius),
+          topEnd = CornerSize(endCornerRadius),
+          bottomEnd = CornerSize(endCornerRadius),
         ),
       ) {
-        Icon(playButtonIcon, contentDescription = null)
+        Icon(
+          if (hasProgress) Icons.Outlined.Autoplay else Icons.Rounded.PlayArrow,
+          contentDescription = null,
+        )
         Spacer(Modifier.width(8.dp))
         Text(
           text = if (hasProgress) {
@@ -93,49 +97,42 @@ internal fun ControlBar(
 
       Spacer(Modifier.width(2.dp))
 
-      Button(
-        enabled = offlineDownload?.state == null || offlineDownload.state == OfflineDownload.State.None,
-        onClick = onDownloadClick,
-        shape = RoundedCornerShape(
-          topStart = CornerSize(splitButtonRadius),
-          bottomStart = CornerSize(splitButtonRadius),
-          topEnd = CornerSize(50),
-          bottomEnd = CornerSize(50),
-        ),
-        contentPadding = PaddingValues(
-          start = 12.dp,
-          end = 14.dp,
-          top = 8.dp,
-          bottom = 8.dp,
-        ),
-        colors = ButtonDefaults.buttonColors(
-          disabledContentColor = MaterialTheme.colorScheme.primary,
-        ),
+      AnimatedVisibility(
+        visible = !hasOfflineDownload,
+        enter = expandHorizontally(),
+        exit = shrinkHorizontally(),
       ) {
-        Icon(
-          when (offlineDownload?.state) {
-            null -> CampfireIcons.Rounded.Download
-            OfflineDownload.State.Stopped,
-            OfflineDownload.State.None,
-            -> CampfireIcons.Rounded.Download
-
-            OfflineDownload.State.Queued,
-            OfflineDownload.State.Downloading,
-            -> Icons.Rounded.Downloading
-
-            OfflineDownload.State.Failed -> Icons.Rounded.ErrorOutline
-            OfflineDownload.State.Completed -> Icons.Rounded.DownloadDone
-          },
-          contentDescription = null,
-          modifier = Modifier.size(22.dp),
-        )
+        Button(
+          onClick = onDownloadClick,
+          shape = RoundedCornerShape(
+            topStart = CornerSize(splitButtonRadius),
+            bottomStart = CornerSize(splitButtonRadius),
+            topEnd = CornerSize(50),
+            bottomEnd = CornerSize(50),
+          ),
+          contentPadding = PaddingValues(
+            start = 12.dp,
+            end = 14.dp,
+            top = 8.dp,
+            bottom = 8.dp,
+          ),
+          modifier = Modifier.testTag("button_download"),
+        ) {
+          Icon(
+            CampfireIcons.Rounded.Download,
+            contentDescription = null,
+            modifier = Modifier.size(22.dp),
+          )
+        }
       }
     }
 
     if (hasProgress) {
       FilledTonalButton(
         onClick = onDiscardProgress,
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+          .fillMaxWidth()
+          .testTag("button_discard_progress"),
       ) {
         Icon(Icons.AutoMirrored.Rounded.Backspace, contentDescription = null)
         Spacer(Modifier.width(8.dp))
@@ -147,7 +144,9 @@ internal fun ControlBar(
     if (mediaProgress?.isFinished != true) {
       FilledTonalButton(
         onClick = onMarkFinished,
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+          .fillMaxWidth()
+          .testTag("button_mark_finished"),
       ) {
         Icon(Icons.Rounded.MarkFinished, contentDescription = null)
         Spacer(Modifier.width(8.dp))
@@ -156,7 +155,9 @@ internal fun ControlBar(
     } else {
       FilledTonalButton(
         onClick = onMarkNotFinished,
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+          .fillMaxWidth()
+          .testTag("button_mark_not_finished"),
       ) {
         Icon(Icons.Filled.MarkFinished, contentDescription = null)
         Spacer(Modifier.width(8.dp))
