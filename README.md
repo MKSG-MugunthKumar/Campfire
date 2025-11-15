@@ -37,7 +37,21 @@
 [firebase]: https://firebase.google.com/
 
 ## Architecture
-Head over to [Architecture](docs/Architecture.md) for more detailed information on the architecture of this project.
+Head over to [Architecture](docs/architecture/README.md) for more detailed information on the architecture of this project.
+
+
+## Screenshots
+| Home                              | Detail                              | Player                                  |
+|-----------------------------------|-------------------------------------|-----------------------------------------|
+| ![](.github/art/screens/Home.png) | ![](.github/art/screens/Detail.png) | ![](.github/art/screens/PlayerView.png) |
+
+| Library                              | Search                              | Stats                              |
+|--------------------------------------|-------------------------------------|------------------------------------|
+| ![](.github/art/screens/Library.png) | ![](.github/art/screens/Search.png) | ![](.github/art/screens/Stats.png) |
+
+| Foldable - Home                            | Foldable - Detail                            |
+|--------------------------------------------|----------------------------------------------|
+| ![](.github/art/screens/Foldable_Home.png) | ![](.github/art/screens/Foldable_Detail.png) |
 
 ## Contributing
 
