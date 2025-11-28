@@ -4,11 +4,11 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
@@ -23,11 +23,13 @@ import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -35,14 +37,16 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.dp
 import app.campfire.common.compose.CampfireWindowInsets
 import app.campfire.common.compose.LocalWindowSizeClass
+import app.campfire.common.compose.layout.LocalSupportingContentState
+import app.campfire.common.compose.layout.SupportingContentState
 import app.campfire.common.compose.layout.isSupportingPaneEnabled
 import app.campfire.common.compose.widgets.CampfireMediumTopAppBar
+import app.campfire.common.compose.widgets.CampfireTopAppBar
 import app.campfire.common.compose.widgets.EmptyState
 import app.campfire.common.compose.widgets.LoadingState
 import app.campfire.common.screens.StatisticsScreen
 import app.campfire.core.coroutines.LoadState
 import app.campfire.core.di.UserScope
-import app.campfire.core.extensions.fluentIf
 import app.campfire.core.model.AuthorWithCount
 import app.campfire.core.model.ItemListenedTo
 import app.campfire.core.model.LargestItem
@@ -75,14 +79,21 @@ fun StatsUi(
   state: StatsUiState,
   modifier: Modifier = Modifier,
 ) {
-  val windowSizeClass = LocalWindowSizeClass.current
+  val windowSizeClass by rememberUpdatedState(LocalWindowSizeClass.current)
+
+  val supportingContentState by rememberUpdatedState(LocalSupportingContentState.current)
+  val isTwoPaneLayout = (
+    windowSizeClass.isSupportingPaneEnabled &&
+      supportingContentState == SupportingContentState.Closed
+    ) ||
+    windowSizeClass.widthSizeClass >= WindowWidthSizeClass.ExtraLarge
+
+  var isUserStats by rememberSaveable { mutableStateOf(true) }
+
   val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
-
-  var isUserStats by remember { mutableStateOf(true) }
-
   Scaffold(
     topBar = {
-      if (!windowSizeClass.isSupportingPaneEnabled) {
+      if (!isTwoPaneLayout) {
         CampfireMediumTopAppBar(
           scrollBehavior = scrollBehavior,
           title = {
@@ -107,40 +118,92 @@ fun StatsUi(
           },
         )
       } else {
-        StatsChoiceBar(
-          isUser = isUserStats,
-          onChange = { isUserStats = it },
-          modifier = Modifier
-            .fillMaxWidth()
-            .padding(
-              horizontal = 16.dp,
-              vertical = 8.dp,
-            ),
+        CampfireTopAppBar(
+          scrollBehavior = scrollBehavior,
+          title = {
+            Row(
+              verticalAlignment = Alignment.CenterVertically,
+            ) {
+              Text(stringResource(Res.string.user_stats_title))
+//              Spacer(Modifier.weight(1f))
+//              StatsChoiceBar(
+//                isUser = isUserStats,
+//                onChange = { isUserStats = it },
+//              )
+//              Spacer(Modifier.width(16.dp))
+            }
+          },
+          navigationIcon = {
+            IconButton(
+              onClick = { state.eventSink(StatsUiEvent.Back) },
+            ) {
+              Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = null)
+            }
+          },
         )
       }
     },
     contentWindowInsets = CampfireWindowInsets,
-    modifier = modifier.fluentIf(!windowSizeClass.isSupportingPaneEnabled) {
-      nestedScroll(scrollBehavior.nestedScrollConnection)
-    },
+    modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
   ) { paddingValues ->
-    StatsSwitcher(
-      isUser = isUserStats,
-      userContent = {
-        StatsContent(
-          models = state.listeningStats,
-          onEvent = state.eventSink,
-          contentPadding = paddingValues,
-        )
-      },
-      libraryContent = {
-        StatsContent(
-          models = state.libraryStats,
-          onEvent = state.eventSink,
-          contentPadding = paddingValues,
-        )
-      },
-    )
+    if (isTwoPaneLayout) {
+      TwoPaneLayout(
+        userContent = {
+          StatsContent(
+            models = state.listeningStats,
+            onEvent = state.eventSink,
+            contentPadding = paddingValues,
+          )
+        },
+        libraryContent = {
+          StatsContent(
+            models = state.libraryStats,
+            onEvent = state.eventSink,
+            contentPadding = paddingValues,
+          )
+        },
+      )
+    } else {
+      StatsSwitcher(
+        isUser = isUserStats,
+        userContent = {
+          StatsContent(
+            models = state.listeningStats,
+            onEvent = state.eventSink,
+            contentPadding = paddingValues,
+          )
+        },
+        libraryContent = {
+          StatsContent(
+            models = state.libraryStats,
+            onEvent = state.eventSink,
+            contentPadding = paddingValues,
+          )
+        },
+      )
+    }
+  }
+}
+
+@Composable
+private fun TwoPaneLayout(
+  userContent: @Composable () -> Unit,
+  libraryContent: @Composable () -> Unit,
+  modifier: Modifier = Modifier,
+) {
+  Row(
+    modifier = modifier,
+  ) {
+    Box(
+      modifier = Modifier.weight(1f),
+    ) {
+      userContent()
+    }
+    Box(
+      modifier = Modifier.weight(1f),
+    ) {
+      libraryContent()
+    }
   }
 }
 

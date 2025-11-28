@@ -9,7 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -30,16 +30,19 @@ private val BookImageSize = 180.dp
 private val BookCornerSize = 12.dp
 private const val MaxBookDisplay = 8
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun ItemCollectionCard(
   name: String,
   description: String?,
+  onClick: () -> Unit,
   items: List<LibraryItem>,
   modifier: Modifier = Modifier,
   itemSize: Dp = Dp.Unspecified,
 ) {
-  ElevatedCard(
+  ElevatedContentCard(
     modifier = modifier,
+    onClick = onClick,
   ) {
     MultiBookLayout(
       items = items,

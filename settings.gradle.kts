@@ -11,9 +11,15 @@ pluginManagement {
   repositories {
 
     if (hasProperty("campfire.config.enableSnapshots")) {
-      maven("https://oss.sonatype.org/content/repositories/snapshots") {
+      maven("https://central.sonatype.com/repository/maven-snapshots/") {
         name = "snapshots-maven-central"
-        mavenContent { snapshotsOnly() }
+        mavenContent {
+          snapshotsOnly()
+        }
+
+        content {
+          includeGroup("com.r0adkll.swatchbuckler")
+        }
       }
     }
 
@@ -35,9 +41,12 @@ dependencyResolutionManagement {
 
   repositories {
     if (hasProperty("campfire.config.enableSnapshots")) {
-      maven("https://oss.sonatype.org/content/repositories/snapshots") {
+      maven("https://central.sonatype.com/repository/maven-snapshots/") {
         name = "snapshots-maven-central"
         mavenContent { snapshotsOnly() }
+        content {
+          includeGroup("com.r0adkll.swatchbuckler")
+        }
       }
     }
 
@@ -191,10 +200,17 @@ include(
 )
 include(
   ":ui:appbar",
-  ":ui:drawer",
+  ":ui:navigation",
   ":ui:attribution",
+)
+include(
   ":ui:widgets:api",
   ":ui:widgets:impl",
+)
+include(
+  ":ui:theming:api",
+  ":ui:theming:impl",
+  ":ui:theming:test",
 )
 include(":scripts:app")
 

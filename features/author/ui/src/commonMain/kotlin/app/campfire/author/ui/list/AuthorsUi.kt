@@ -1,6 +1,5 @@
 package app.campfire.author.ui.list
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
@@ -8,27 +7,24 @@ import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.SearchBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.dp
 import app.campfire.common.compose.CampfireWindowInsets
-import app.campfire.common.compose.LocalWindowSizeClass
 import app.campfire.common.compose.extensions.plus
 import app.campfire.common.compose.layout.LazyCampfireGrid
-import app.campfire.common.compose.layout.isSupportingPaneEnabled
 import app.campfire.common.compose.widgets.AuthorCard
 import app.campfire.common.compose.widgets.ErrorListState
 import app.campfire.common.compose.widgets.LoadingListState
 import app.campfire.common.screens.AuthorsScreen
 import app.campfire.core.coroutines.LoadState
 import app.campfire.core.di.UserScope
-import app.campfire.core.extensions.fluentIf
 import app.campfire.core.model.Author
 import app.campfire.ui.appbar.CampfireAppBar
+import app.campfire.ui.navigation.bar.AttachScrollBehaviorToLocalNavigationBar
 import campfire.features.author.ui.generated.resources.Res
 import campfire.features.author.ui.generated.resources.error_authors_items_message
 import com.r0adkll.kimchi.circuit.annotations.CircuitInject
@@ -41,23 +37,19 @@ fun Authors(
   campfireAppBar: CampfireAppBar,
   modifier: Modifier = Modifier,
 ) {
-  val windowSizeClass by rememberUpdatedState(LocalWindowSizeClass.current)
-  val appBarBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
+  val appBarBehavior = SearchBarDefaults.enterAlwaysSearchBarScrollBehavior()
+  AttachScrollBehaviorToLocalNavigationBar(appBarBehavior)
 
   Scaffold(
     topBar = {
-      if (!windowSizeClass.isSupportingPaneEnabled) {
-        // Injected appbar that injects its own presenter to consistently load its state
-        // across multiple services.
-        campfireAppBar(
-          Modifier,
-          appBarBehavior,
-        )
-      }
+      // Injected appbar that injects its own presenter to consistently load its state
+      // across multiple services.
+      campfireAppBar(
+        Modifier,
+        appBarBehavior,
+      )
     },
-    modifier = modifier.fluentIf(!windowSizeClass.isSupportingPaneEnabled) {
-      nestedScroll(appBarBehavior.nestedScrollConnection)
-    },
+    modifier = modifier.nestedScroll(appBarBehavior.nestedScrollConnection),
     contentWindowInsets = CampfireWindowInsets,
   ) { paddingValues ->
     when (state.authorContentState) {
@@ -97,9 +89,7 @@ private fun LoadedState(
     ) { author ->
       AuthorCard(
         author = author,
-        modifier = Modifier.clickable {
-          onAuthorClick(author)
-        },
+        onClick = { onAuthorClick(author) },
       )
     }
   }

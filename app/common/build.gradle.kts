@@ -63,14 +63,16 @@ kotlin {
         api(projects.features.stats.impl)
         api(projects.features.stats.ui)
 
-        api(projects.ui.drawer)
+        api(projects.ui.navigation)
         api(projects.ui.attribution)
         api(projects.ui.widgets.impl)
+        api(projects.ui.theming.impl)
 
         api(compose.runtime)
         api(compose.foundation)
         api(compose.material)
-        api(compose.material3)
+//        api(compose.material3)
+        api(libs.compose.material3.expressive)
         api(compose.material3AdaptiveNavigationSuite)
         api(compose.materialIconsExtended)
         @OptIn(org.jetbrains.compose.ExperimentalComposeLibrary::class)

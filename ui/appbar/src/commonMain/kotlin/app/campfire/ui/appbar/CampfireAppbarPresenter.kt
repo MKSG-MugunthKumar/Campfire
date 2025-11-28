@@ -9,10 +9,12 @@ import androidx.compose.runtime.rememberCoroutineScope
 import app.campfire.account.api.ServerRepository
 import app.campfire.common.compose.widgets.AppBarState
 import app.campfire.common.compose.widgets.AppBarState.LibraryState
-import app.campfire.common.compose.widgets.AppBarState.ServerState
 import app.campfire.common.compose.widgets.AppBarViewEvent
+import app.campfire.common.compose.widgets.ServerState
 import app.campfire.core.model.Library
 import app.campfire.libraries.api.LibraryRepository
+import app.campfire.settings.api.CampfireSettings
+import com.slack.circuit.retained.collectAsRetainedState
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
@@ -20,6 +22,7 @@ import me.tatarka.inject.annotations.Inject
 
 @Inject
 class CampfireAppbarPresenter(
+  private val settings: CampfireSettings,
   private val serverRepository: ServerRepository,
   private val libraryRepository: LibraryRepository,
 ) {
@@ -28,17 +31,21 @@ class CampfireAppbarPresenter(
   fun present(): AppBarState {
     val scope = rememberCoroutineScope()
 
+    val useDynamicColors by remember {
+      settings.observeUseDynamicColors()
+    }.collectAsState(settings.useDynamicColors)
+
     val server by remember {
       serverRepository.observeCurrentServer()
-    }.collectAsState(null)
+    }.collectAsRetainedState(null)
 
     val library by remember {
-      libraryRepository.observeCurrentLibrary()
+      libraryRepository.observeCurrentLibrary(refresh = false)
         .catch { null }
     }.collectAsState(null)
 
     val libraries by remember {
-      libraryRepository.observeAllLibraries()
+      libraryRepository.observeAllLibraries(refresh = false)
         .map { it.sortedBy { it.displayOrder } }
         .catch { emptyList<Library>() }
     }.collectAsState(emptyList())
@@ -51,7 +58,7 @@ class CampfireAppbarPresenter(
 
     return AppBarState(
       library = library?.let { LibraryState.Loaded(it) } ?: LibraryState.Loading,
-      server = server?.let { ServerState.Loaded(it, connectionState) } ?: ServerState.Loading,
+      server = server?.let { ServerState.Loaded(it, useDynamicColors, connectionState) } ?: ServerState.Loading,
       allLibraries = libraries,
     ) { event ->
       when (event) {

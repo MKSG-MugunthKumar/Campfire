@@ -47,16 +47,16 @@ data class LoginScreen(
 data object HomeScreen : BaseScreen(name = "Home")
 
 @Parcelize
-data object DrawerScreen : StaticScreen
-
-@Parcelize
 data object SeriesScreen : BaseScreen(name = "Series")
 
 @Parcelize
 data class SeriesDetailScreen(
   val seriesId: SeriesId,
   val seriesName: String,
-) : DetailScreen(name = "SeriesDetail")
+) : DetailScreen(name = "SeriesDetail") {
+  override val presentation: Presentation
+    get() = Presentation(hideBottomNav = false)
+}
 
 @Parcelize
 data object CollectionsScreen : BaseScreen(name = "Collections")
@@ -65,7 +65,10 @@ data object CollectionsScreen : BaseScreen(name = "Collections")
 data class CollectionDetailScreen(
   val collectionId: CollectionId,
   val collectionName: String,
-) : DetailScreen(name = "CollectionDetail")
+) : DetailScreen(name = "CollectionDetail") {
+  override val presentation: Presentation
+    get() = Presentation(hideBottomNav = false)
+}
 
 @Parcelize
 data object AuthorsScreen : BaseScreen(name = "Authors")
@@ -120,8 +123,8 @@ data class UrlScreen(val url: String) : BaseScreen(name = "UrlScreen") {
  * or in the supporting pane on larger devices like desktop, tablets and foldables
  */
 abstract class DetailScreen(name: String) : BaseScreen(name) {
-//  override val presentation: Presentation
-//    get() = Presentation.Fullscreen
+  override val presentation: Presentation
+    get() = Presentation.Fullscreen
 }
 
 /**

@@ -57,7 +57,6 @@ class TitleAndAuthorSlot(
       )
 
       libraryItem.media.metadata.subtitle?.let { subtitle ->
-        Spacer(Modifier.height(4.dp))
         Text(
           text = subtitle,
           style = MaterialTheme.typography.titleLarge,
@@ -87,6 +86,7 @@ class TitleAndAuthorSlot(
         Text(
           text = libraryItem.media.durationInMillis.milliseconds.readoutFormat(),
           style = MaterialTheme.typography.titleSmall,
+          fontWeight = FontWeight.SemiBold,
         )
         Spacer(Modifier.width(26.dp))
       }

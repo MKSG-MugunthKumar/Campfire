@@ -2,9 +2,6 @@ package app.campfire.common.compose
 
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.add
-import androidx.compose.foundation.layout.exclude
-import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.layout.systemBars
 import androidx.compose.material3.ScaffoldDefaults
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.Composable
@@ -37,7 +34,9 @@ val CampfireWindowInsets: WindowInsets
     }
 
     return if (windowSizeClass.isSupportingPaneEnabled) {
-      WindowInsets.systemBars.exclude(WindowInsets.statusBars).add(playbackBarInsets)
+      ScaffoldDefaults.contentWindowInsets
+//        .exclude(WindowInsets.statusBars)
+        .add(playbackBarInsets)
     } else {
       ScaffoldDefaults.contentWindowInsets.add(playbackBarInsets)
     }

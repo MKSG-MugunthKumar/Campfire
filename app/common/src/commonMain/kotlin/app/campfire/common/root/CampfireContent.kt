@@ -2,6 +2,7 @@ package app.campfire.common.root
 
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.exclude
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
@@ -22,8 +23,12 @@ import app.campfire.common.compose.extensions.shouldUseDarkColors
 import app.campfire.common.compose.extensions.shouldUseDynamicColors
 import app.campfire.common.compose.session.LocalPlaybackSession
 import app.campfire.common.compose.theme.CampfireTheme
+import app.campfire.common.compose.util.LocalThemeDispatcher
+import app.campfire.common.compose.util.ThemeDispatcher
 import app.campfire.common.navigator.OpenUrlNavigator
 import app.campfire.settings.api.CampfireSettings
+import app.campfire.settings.api.ThemeSettings
+import app.campfire.ui.theming.api.ThemeManager
 import com.slack.circuit.backstack.rememberSaveableBackStack
 import com.slack.circuit.foundation.CircuitCompositionLocals
 import com.slack.circuit.foundation.rememberCircuitNavigator
@@ -50,6 +55,8 @@ fun CampfireContentWithInsets(
   @Assisted windowInsets: WindowInsets,
   settings: CampfireSettings,
   userSessionManager: UserSessionManager,
+  themeManager: ThemeManager,
+  themeSettings: ThemeSettings,
   @Assisted modifier: Modifier = Modifier,
 ) {
   val appUriHandler = remember(onOpenUrl) {
@@ -82,6 +89,16 @@ fun CampfireContentWithInsets(
         OpenUrlNavigator(navigator, onOpenUrl)
       }
 
+      // Remember an instance of the theme dispatcher
+      val themeManagerDispatcher = remember {
+        ThemeDispatcher { key, imageBitmap ->
+          themeManager.enqueue(
+            key = key,
+            image = imageBitmap,
+          )
+        }
+      }
+
       CircuitCompositionLocals(userComponent.circuit) {
         CampfireTheme(
           tent = rememberCurrentTent(userComponent.currentUserSession),
@@ -90,10 +107,13 @@ fun CampfireContentWithInsets(
         ) {
           CompositionLocalProvider(
             LocalPlaybackSession provides currentSession,
+            LocalThemeDispatcher provides themeManagerDispatcher,
           ) {
-            HomeUi(
+            RootUi(
               backstack = backStack,
               navigator = urlNavigator,
+              themeManager = themeManager,
+              themeSettings = themeSettings,
               windowInsets = windowInsets,
               navigationEventListeners = userComponent.navigationEventListeners,
               modifier = modifier,
@@ -118,14 +138,20 @@ fun CampfireContent(
   @Assisted onOpenUrl: (String) -> Unit,
   settings: CampfireSettings,
   userSessionManager: UserSessionManager,
+  themeManager: ThemeManager,
+  themeSettings: ThemeSettings,
   @Assisted modifier: Modifier = Modifier,
 ) {
   CampfireContentWithInsets(
     onRootPop = onRootPop,
     settings = settings,
     userSessionManager = userSessionManager,
+    themeManager = themeManager,
+    themeSettings = themeSettings,
     onOpenUrl = onOpenUrl,
-    windowInsets = WindowInsets.systemBars.exclude(WindowInsets.statusBars),
+    windowInsets = WindowInsets.systemBars
+      .exclude(WindowInsets.statusBars)
+      .exclude(WindowInsets.navigationBars),
     modifier = modifier,
   )
 }

@@ -1,6 +1,5 @@
 package app.campfire.series.ui.detail
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
@@ -107,9 +106,7 @@ private fun LoadedState(
         sharedTransitionKey = item.id + seriesName,
         sharedTransitionZIndex = -(index + 1f),
         offlineStatus = offlineStatus(item.id),
-        modifier = Modifier.clickable {
-          onLibraryItemClick(item)
-        },
+        onClick = { onLibraryItemClick(item) },
       )
     }
   }

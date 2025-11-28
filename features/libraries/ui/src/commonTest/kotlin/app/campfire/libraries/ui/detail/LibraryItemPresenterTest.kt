@@ -1,6 +1,5 @@
 package app.campfire.libraries.ui.detail
 
-import app.campfire.audioplayer.offline.OfflineDownload
 import app.campfire.common.test.assert.containsInstance
 import app.campfire.common.test.assert.doesNotContainInstance
 import app.campfire.common.test.assert.firstInstanceOf
@@ -12,10 +11,8 @@ import app.campfire.libraries.ui.detail.composables.slots.ChapterHeaderSlot
 import app.campfire.libraries.ui.detail.composables.slots.ChapterSlot
 import app.campfire.libraries.ui.detail.composables.slots.ChipsSlot
 import app.campfire.libraries.ui.detail.composables.slots.ContentSlot
-import app.campfire.libraries.ui.detail.composables.slots.ControlSlot
-import app.campfire.libraries.ui.detail.composables.slots.OfflineStatusSlot
+import app.campfire.libraries.ui.detail.composables.slots.ExpressiveControlSlot
 import app.campfire.libraries.ui.detail.composables.slots.ProgressSlot
-import app.campfire.libraries.ui.detail.composables.slots.PublishedSlot
 import app.campfire.libraries.ui.detail.composables.slots.SeriesSlot
 import app.campfire.libraries.ui.detail.composables.slots.SummarySlot
 import assertk.Assert
@@ -56,10 +53,8 @@ class LibraryItemPresenterTest : BaseLibraryItemPresenterTest() {
         .loadedSlots
         .all {
           doesNotContainInstance<ProgressSlot>()
-          doesNotContainInstance<OfflineStatusSlot>()
           doesNotContainInstance<SummarySlot>()
           doesNotContainInstance<SeriesSlot>()
-          doesNotContainInstance<PublishedSlot>()
           doesNotContainInstance<ChipsSlot>()
           doesNotContainInstance<ChapterHeaderSlot>()
           doesNotContainInstance<ChapterSlot>()
@@ -83,36 +78,6 @@ class LibraryItemPresenterTest : BaseLibraryItemPresenterTest() {
   }
 
   @Test
-  fun present_OfflineDownloadNone_NoOfflineStatusSlot() = runTest {
-    val libraryItem = emptyLibraryItem()
-    libraryItemRepository.libraryItemFlow.emit(libraryItem)
-    val offlineDownload = OfflineDownload("id", OfflineDownload.State.None)
-    offlineDownloadManager.observeForItemFlow.emit(offlineDownload)
-
-    presenter.test {
-      skipItems(1)
-      assertThat(awaitItem())
-        .loadedSlots
-        .doesNotContainInstance<OfflineStatusSlot>()
-    }
-  }
-
-  @Test
-  fun present_OfflineDownload_GeneratesOfflineStatusSlot() = runTest {
-    val libraryItem = emptyLibraryItem()
-    libraryItemRepository.libraryItemFlow.emit(libraryItem)
-    val offlineDownload = OfflineDownload("id", OfflineDownload.State.Completed)
-    offlineDownloadManager.observeForItemFlow.emit(offlineDownload)
-
-    presenter.test {
-      skipItems(1)
-      assertThat(awaitItem())
-        .loadedSlots
-        .containsInstance<OfflineStatusSlot>()
-    }
-  }
-
-  @Test
   fun present_Description_GeneratesSummarySlot() = runTest {
     val libraryItem = emptyLibraryItem(description = "Some desc")
     libraryItemRepository.libraryItemFlow.emit(libraryItem)
@@ -122,21 +87,6 @@ class LibraryItemPresenterTest : BaseLibraryItemPresenterTest() {
       assertThat(awaitItem())
         .loadedSlots
         .containsInstance<SummarySlot>()
-    }
-  }
-
-  @Test
-  fun present_Publisher_GeneratesPublishedSlot() = runTest {
-    val libraryItem = emptyLibraryItem(
-      publisher = "publisher",
-    )
-    libraryItemRepository.libraryItemFlow.emit(libraryItem)
-
-    presenter.test {
-      skipItems(1)
-      assertThat(awaitItem())
-        .loadedSlots
-        .containsInstance<PublishedSlot>()
     }
   }
 
@@ -267,7 +217,7 @@ class LibraryItemPresenterTest : BaseLibraryItemPresenterTest() {
   }
 
   @Test
-  fun present_showConfirmDownloadDialog_UpdatesControlSlot() = runTest {
+  fun present_showConfirmDownloadDialog_UpdatesExpressiveControlSlot() = runTest {
     val libraryItem = emptyLibraryItem()
     libraryItemRepository.libraryItemFlow.emit(libraryItem)
 
@@ -276,16 +226,16 @@ class LibraryItemPresenterTest : BaseLibraryItemPresenterTest() {
 
       assertThat(awaitItem())
         .loadedSlots
-        .firstInstanceOf<ControlSlot>()
-        .prop(ControlSlot::showConfirmDownloadDialogSetting)
+        .firstInstanceOf<ExpressiveControlSlot>()
+        .prop(ExpressiveControlSlot::showConfirmDownloadDialogSetting)
         .isEqualTo(false)
 
       settings.showConfirmDownload = true
 
       assertThat(awaitItem())
         .loadedSlots
-        .firstInstanceOf<ControlSlot>()
-        .prop(ControlSlot::showConfirmDownloadDialogSetting)
+        .firstInstanceOf<ExpressiveControlSlot>()
+        .prop(ExpressiveControlSlot::showConfirmDownloadDialogSetting)
         .isEqualTo(true)
     }
   }

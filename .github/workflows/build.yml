@@ -35,7 +35,7 @@ jobs:
         uses: actions/setup-java@v5
         with:
           distribution: 'zulu'
-          java-version: 17
+          java-version: 21
           cache: gradle
 
       - name: Set up Gradle
@@ -79,7 +79,7 @@ jobs:
         uses: actions/setup-java@v5
         with:
           distribution: 'zulu'
-          java-version: 17
+          java-version: 21
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v5
@@ -90,10 +90,27 @@ jobs:
         run: |
           echo $GOOGLE_SERVICES_JSON > app/android/google-services.json
 
+      - name: Check skip-coverage label is added
+        id: label-check
+        run: |
+          if gh api --jq '.labels.[].name' /repos/r0adkll/Campfire/pulls/${{ github.event.number }} | grep -q "skip-coverage"
+          then
+            echo "SKIP_COVERAGE=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "SKIP_COVERAGE=false" >> "$GITHUB_OUTPUT"
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check label output
+        run: echo "${{ steps.label-check.outputs.SKIP_COVERAGE }}"
+
       - name: Run tests and generate coverage report
+        if: ${{ steps.label-check.outputs.SKIP_COVERAGE == 'false' }}
         run: ./gradlew --quiet test allTests koverXmlReport
 
       - name: Add coverage report to PR
+        if: ${{ steps.label-check.outputs.SKIP_COVERAGE == 'false' }}
         id: kover
         uses: mi-kas/kover-report@v1
         with:
@@ -104,6 +121,13 @@ jobs:
           min-coverage-overall: 50
           min-coverage-changed-files: 80
           coverage-counter-type: LINE
+
+      - name: Fail if coverage is not met
+        if: ${{ steps.label-check.outputs.SKIP_COVERAGE == 'false' }}
+        run: |
+          if [[ "${{ steps.kover.outputs.coverage-changed-files }}" -lt 50 ]]; then
+            exit 1
+          fi
 
   android:
     needs: [code-style]
@@ -121,7 +145,7 @@ jobs:
         uses: actions/setup-java@v5
         with:
           distribution: 'zulu'
-          java-version: 17
+          java-version: 21
           cache: gradle
 
       - name: Set up Gradle
@@ -190,7 +214,7 @@ jobs:
         uses: actions/setup-java@v5
         with:
           distribution: 'zulu'
-          java-version: 17
+          java-version: 21
           cache: gradle
 
       - name: Set up Gradle
@@ -226,7 +250,7 @@ jobs:
         uses: actions/setup-java@v5
         with:
           distribution: 'zulu'
-          java-version: 17
+          java-version: 21
           cache: gradle
 
       - name: Set up Gradle
