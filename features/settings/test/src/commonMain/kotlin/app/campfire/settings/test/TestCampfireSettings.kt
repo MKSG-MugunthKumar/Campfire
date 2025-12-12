@@ -5,6 +5,8 @@ import app.campfire.core.settings.ItemDisplayState
 import app.campfire.core.settings.SortDirection
 import app.campfire.core.settings.SortMode
 import app.campfire.settings.api.CampfireSettings
+import app.campfire.settings.api.ThemeKey
+import app.campfire.settings.api.ThemeMode
 import kotlinx.coroutines.flow.Flow
 
 class TestCampfireSettings : TestSettings(), CampfireSettings {
@@ -14,6 +16,8 @@ class TestCampfireSettings : TestSettings(), CampfireSettings {
   override var hasEverConsented: Boolean by boolean()
   override var crashReportingEnabled: Boolean by boolean()
 
+  override var themeId: ThemeKey = ThemeKey.Tent
+
   override fun observeCrashReportingEnabled(): Flow<Boolean> =
     observeBoolean(::crashReportingEnabled)
 
@@ -21,13 +25,9 @@ class TestCampfireSettings : TestSettings(), CampfireSettings {
   override fun observeAnalyticReportingEnabled(): Flow<Boolean> =
     observeBoolean(::analyticReportingEnabled)
 
-  override var theme: CampfireSettings.Theme by enum()
-  override fun observeTheme(): Flow<CampfireSettings.Theme> =
-    observeEnum(::theme)
-
-  override var useDynamicColors: Boolean by boolean()
-  override fun observeUseDynamicColors(): Flow<Boolean> =
-    observeBoolean(::useDynamicColors)
+  override var themeMode: ThemeMode by enum()
+  override fun observeTheme(): Flow<ThemeMode> =
+    observeEnum(::themeMode)
 
   override var libraryItemDisplayState: ItemDisplayState by enum()
   override fun observeLibraryItemDisplayState(): Flow<ItemDisplayState> =

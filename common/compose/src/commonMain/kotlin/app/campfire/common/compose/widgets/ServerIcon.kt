@@ -18,12 +18,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import app.campfire.common.compose.icons.icon
-import app.campfire.common.compose.icons.rememberTentVectorPainter
-import app.campfire.common.compose.widgets.AppBarState.ConnectionState
-import app.campfire.common.compose.widgets.AppBarState.ConnectionState.Connected
-import app.campfire.common.compose.widgets.AppBarState.ConnectionState.Connecting
-import app.campfire.common.compose.widgets.AppBarState.ConnectionState.Disconnected
-import app.campfire.common.compose.widgets.AppBarState.ConnectionState.None
 import app.campfire.core.model.Server
 import app.campfire.core.model.Tent
 
@@ -33,10 +27,16 @@ sealed interface ServerState {
   data object Loading : ServerState
   data class Loaded(
     val server: Server,
-    val useDynamicColors: Boolean,
     val connectionState: ConnectionState,
   ) : ServerState
   data object Error : ServerState
+}
+
+enum class ConnectionState {
+  Disconnected,
+  Connecting,
+  Connected,
+  None,
 }
 
 @Composable
@@ -65,33 +65,25 @@ fun ServerIcon(
       }
 
       is ServerState.Loaded -> {
-        if (serverState.useDynamicColors) {
-          Image(
-            rememberTentVectorPainter(),
-            contentDescription = null,
-            modifier = Modifier
-              .size(size)
-              .padding(4.dp),
-          )
-        } else {
-          Image(
-            serverState.server.tent.icon,
-            contentDescription = null,
-            modifier = Modifier
-              .size(size)
-              .padding(4.dp),
-          )
-        }
-        if (serverState.connectionState != None) {
+        // TODO: Load from app theme
+        Image(
+          serverState.server.tent.icon,
+          contentDescription = null,
+          modifier = Modifier
+            .size(size)
+            .padding(4.dp),
+        )
+
+        if (serverState.connectionState != ConnectionState.None) {
           Box(
             modifier = Modifier
               .size(8.dp)
               .background(
                 when (serverState.connectionState) {
-                  Disconnected -> MaterialTheme.colorScheme.error
-                  Connecting -> Color.Yellow
-                  Connected -> Color.Green
-                  None -> Color.Transparent
+                  ConnectionState.Disconnected -> MaterialTheme.colorScheme.error
+                  ConnectionState.Connecting -> Color.Yellow
+                  ConnectionState.Connected -> Color.Green
+                  ConnectionState.None -> Color.Transparent
                 },
                 CircleShape,
               ),

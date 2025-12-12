@@ -49,13 +49,13 @@ import app.campfire.common.compose.icons.CampfireIcons
 import app.campfire.common.compose.icons.asComposeIcon
 import app.campfire.common.compose.icons.filled.Library
 import app.campfire.common.compose.icons.icon
-import app.campfire.common.compose.icons.rememberTentVectorPainter
 import app.campfire.common.compose.icons.rounded.AccountSwitch
+import app.campfire.common.compose.icons.theme.rememberWallVectorPainter
 import app.campfire.common.compose.theme.PaytoneOneFontFamily
 import app.campfire.core.coroutines.LoadState
 import app.campfire.core.di.UserScope
 import app.campfire.core.model.Library
-import app.campfire.core.model.Tent
+import app.campfire.ui.theming.api.AppTheme
 import campfire.data.account.ui.generated.resources.Res
 import campfire.data.account.ui.generated.resources.libraries_error_message
 import campfire.data.account.ui.generated.resources.server_name_error
@@ -91,11 +91,6 @@ private fun AccountSwitcher(
   onClick: () -> Unit,
   modifier: Modifier = Modifier,
 ) {
-  val tent = when (val currentAccount = state.currentAccount) {
-    is LoadState.Loaded -> currentAccount.data.tent
-    else -> Tent.Default
-  }
-
   val serverName = when (val currentAccount = state.currentAccount) {
     is LoadState.Loaded -> currentAccount.data.name
     LoadState.Loading -> stringResource(Res.string.server_name_loading)
@@ -112,8 +107,7 @@ private fun AccountSwitcher(
       .padding(16.dp),
   ) {
     AccountSwitcher(
-      tent = tent,
-      useDynamicColors = state.useDynamicColors,
+      appTheme = state.theme,
       serverName = { Text(serverName) },
       userName = { userName?.let { Text(it) } },
       onClick = onClick,
@@ -146,8 +140,7 @@ private fun AccountCard(
 
 @Composable
 private fun AccountSwitcher(
-  tent: Tent,
-  useDynamicColors: Boolean,
+  appTheme: AppTheme,
   serverName: @Composable () -> Unit,
   userName: @Composable () -> Unit,
   onClick: () -> Unit,
@@ -171,20 +164,24 @@ private fun AccountSwitcher(
         ),
       verticalAlignment = Alignment.CenterVertically,
     ) {
-      if (useDynamicColors) {
-        Image(
-          rememberTentVectorPainter(),
-          contentDescription = null,
-          modifier = Modifier
-            .size(TentIconSize),
-        )
-      } else {
-        Image(
-          tent.icon,
-          contentDescription = null,
-          modifier = Modifier
-            .size(TentIconSize),
-        )
+      when (appTheme) {
+        AppTheme.Dynamic -> {
+          Image(
+            rememberWallVectorPainter(),
+            contentDescription = null,
+            modifier = Modifier
+              .size(TentIconSize),
+          )
+        }
+
+        is AppTheme.Fixed -> {
+          Image(
+            appTheme.icon.icon(),
+            contentDescription = null,
+            modifier = Modifier
+              .size(TentIconSize),
+          )
+        }
       }
 
       Spacer(Modifier.width(16.dp))
