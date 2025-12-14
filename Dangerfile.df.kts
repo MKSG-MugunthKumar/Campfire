@@ -59,7 +59,7 @@ danger(args) {
     val hasSchemaChanges = allSourceFiles.any { it.endsWith(".sq") }
     if (hasSchemaChanges && !ignoreDbChanges) {
       // Check for Migration
-      val migration = git.createdFiles.find { it.endsWith(".sqm") }
+      val migration = allSourceFiles.find { it.endsWith(".sqm") }
       if (migration == null) {
         fail(
           "Changes have been made to the DB schema, but no migration has been found. " +
@@ -73,7 +73,7 @@ danger(args) {
         }
 
         // Check if the user has updated the migration code
-        val databaseFactory = File(".", "data/db/src/commonMain/kotlin/app/campfire/db/DatabaseFactory.kt")
+        val databaseFactory = File(".", "data/db/core/src/commonMain/kotlin/app/campfire/db/DatabaseFactory.kt")
         val dbFactoryContent = databaseFactory.readText()
 
         val oldDbVersion = OLD_DB_VERSION_REGEX.find(dbFactoryContent)?.groupValues?.getOrNull(1)?.toIntOrNull()

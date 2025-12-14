@@ -37,6 +37,7 @@ import app.campfire.core.logging.Cork
 import app.campfire.core.logging.Corked
 import app.campfire.core.model.Session
 import app.campfire.core.model.loggableId
+import app.campfire.crashreporting.CrashReporter
 import app.campfire.settings.api.PlaybackSettings
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
@@ -182,41 +183,88 @@ class ExoPlayerAudioPlayer(
 
       // Seek the media player
       if (chapterId != null) {
-        // If the Chapter Id is passed explicitly then we can take that intention as
-        // starting playback directly at that chapter
-        val chapter = session.libraryItem.media.chapters.find { it.id == chapterId }
-          ?: error("Unable to find chapter to start")
+        if (session.libraryItem.media.chapters.isNotEmpty()) {
+          // If the Chapter Id is passed explicitly then we can take that intention as
+          // starting playback directly at that chapter
+          val chapter = session.libraryItem.media.chapters.find { it.id == chapterId }
+            ?: error("Unable to find chapter to start")
 
-        val overallProgressOfChapterMs = session.libraryItem.media.chapters.fold(0L) { acc, c ->
-          if (c.id < chapterId) {
-            acc + c.duration.inWholeMilliseconds
-          } else {
-            acc
+          val overallProgressOfChapterMs = session.libraryItem.media.chapters.fold(0L) { acc, c ->
+            if (c.id < chapterId) {
+              acc + c.duration.inWholeMilliseconds
+            } else {
+              acc
+            }
           }
-        }
 
-        seekTo(chapterId)
-        currentTime.value = 0.seconds
-        currentDuration.value = chapter.duration
-        currentMetadata.value = Metadata(
-          title = chapter.title,
-          artworkUri = session.libraryItem.media.coverImageUrl,
-        )
-        overallTime.value = overallProgressOfChapterMs.milliseconds
+          seekTo(chapterId)
+          currentTime.value = 0.seconds
+          currentDuration.value = chapter.duration
+          currentMetadata.value = Metadata(
+            title = chapter.title,
+            artworkUri = session.libraryItem.media.coverImageUrl,
+          )
+          overallTime.value = overallProgressOfChapterMs.milliseconds
+        } else if (session.libraryItem.media.tracks.isNotEmpty()) {
+          // If the Chapter Id is passed explicitly then we can take that intention as
+          // starting playback directly at that chapter
+          val track = session.libraryItem.media.tracks.find { it.index == chapterId }
+            ?: error("Unable to find audio track to start")
+
+          seekTo(chapterId)
+          currentTime.value = 0.seconds
+          currentDuration.value = track.duration.seconds
+          currentMetadata.value = Metadata(
+            title = track.taggedTitle,
+            artworkUri = session.libraryItem.media.coverImageUrl,
+          )
+          overallTime.value = track.startOffset.seconds
+        } else {
+          CrashReporter.record(
+            InvalidPlaybackSessionException(
+              session,
+              "Chapter/Track Prepare Failed: No Chapters / Tracks",
+            ),
+          )
+        }
       } else if (session.currentTime.isFinite() && session.currentTime > 0.seconds) {
         val chapter = session.chapter
-        val progressInChapterMs = (session.currentTime - chapter.start.seconds)
-          .inWholeMilliseconds.coerceAtLeast(0L)
-        seekTo(chapter.id, progressInChapterMs)
+        val track = session.audioTrack
+        if (chapter != null) {
+          val progressInChapterMs = (session.currentTime - chapter.start.seconds)
+            .inWholeMilliseconds.coerceAtLeast(0L)
+          seekTo(chapter.id, progressInChapterMs)
 
-        // Hydrate the current states so the UI reflects appropriately
-        currentTime.value = progressInChapterMs.milliseconds
-        currentDuration.value = chapter.duration
-        currentMetadata.value = Metadata(
-          title = chapter.title,
-          artworkUri = session.libraryItem.media.coverImageUrl,
-        )
-        overallTime.value = session.currentTime
+          // Hydrate the current states so the UI reflects appropriately
+          currentTime.value = progressInChapterMs.milliseconds
+          currentDuration.value = chapter.duration
+          currentMetadata.value = Metadata(
+            title = chapter.title,
+            artworkUri = session.libraryItem.media.coverImageUrl,
+          )
+          overallTime.value = session.currentTime
+        } else if (track != null) {
+          val progressInTrackMs = (session.currentTime - track.startOffset.seconds)
+            .inWholeMilliseconds.coerceAtLeast(0L)
+          // AudioTrack indexes start at 1
+          seekTo(track.index - 1, progressInTrackMs)
+
+          // Hydrate the current states so the UI reflects appropriately
+          currentTime.value = progressInTrackMs.milliseconds
+          currentDuration.value = track.duration.seconds
+          currentMetadata.value = Metadata(
+            title = track.taggedTitle,
+            artworkUri = session.libraryItem.media.coverImageUrl,
+          )
+          overallTime.value = session.currentTime
+        } else {
+          CrashReporter.record(
+            InvalidPlaybackSessionException(
+              session,
+              "Session Time is > 0, unable to find chapter/track info",
+            ),
+          )
+        }
       }
 
       if (playImmediately) {
