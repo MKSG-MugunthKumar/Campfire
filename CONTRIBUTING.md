@@ -4,6 +4,12 @@
 
 Please feel free to create issues and enhancement requests at anytime. If you plan to fork and submit a Pull Request then please start by opening an issue for tracking purposes.
 
+## LLMs & "AI"
+
+I'm not opposed to user's using LLMs to assist in development but submitted code must ALWAYS be reviewed and cleaned
+up by a _human_ before submitting pull requests. The the quality of PRs is too low they will be automatically rejected
+at my discretion.
+
 ## Contribution Flow
 
 1. **Fork** the repository on GitHub
