@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+### Changed
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Other Notes & Contributions
+
+## [0.8.0-beta] - 2025-12-16
+
+### Added
+
 - New dynamic content theming based on an item's thumbnail.
 - Ability to change the seed color for per-item theming
 - Settings to enable/disable dynamic content based theming
@@ -21,8 +35,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Moved 'tent' choice/theming to 'Appearance' settings tab
 - Moved 'Collections' to the left-drawer from bottom nav bar
 - Editing collections now only shows for server admins
-
-### Deprecated
 
 ### Removed
 
@@ -39,8 +51,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Crash due to missing or misaligned chapters during playback / ui
 - Crash due to no user stat information
 - Home feed not syncing / displaying correctly
-
-### Other Notes & Contributions
 
 ## [0.7.2-beta] - 2025-11-06
 

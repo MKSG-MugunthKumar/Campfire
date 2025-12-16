@@ -49,9 +49,9 @@ Head over to [Architecture](docs/architecture/README.md) for more detailed infor
 |--------------------------------------|-------------------------------------|------------------------------------|
 | ![](.github/art/screens/Library.png) | ![](.github/art/screens/Search.png) | ![](.github/art/screens/Stats.png) |
 
-| Foldable - Home                            | Foldable - Detail                            |
-|--------------------------------------------|----------------------------------------------|
-| ![](.github/art/screens/Foldable_Home.png) | ![](.github/art/screens/Foldable_Detail.png) |
+| Foldable - Home                           | Foldable - Detail                           |
+|-------------------------------------------|---------------------------------------------|
+| ![](.github/art/screens/FoldableHome.png) | ![](.github/art/screens/FoldableDetail.png) |
 
 ## Contributing
 
