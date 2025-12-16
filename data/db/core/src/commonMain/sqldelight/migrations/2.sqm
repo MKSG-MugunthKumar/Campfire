@@ -27,15 +27,14 @@ DROP TABLE mediaProgress;
 ALTER TABLE mediaProgress2 RENAME TO mediaProgress;
 
 -- Add metaTag columns on mediaAudioTracks table
-ALTER TABLE mediaAudioTracks
-ADD COLUMN metaTags_tagAlbum TEXT,
-ADD COLUMN metaTags_tagArtist TEXT,
-ADD COLUMN metaTags_tagAlbumArtist TEXT,
-ADD COLUMN metaTags_tagTitle TEXT,
-ADD COLUMN metaTags_tagSubtitle TEXT,
-ADD COLUMN metaTags_tagSeries TEXT,
-ADD COLUMN metaTags_tagSeriesPart TEXT,
-ADD COLUMN metaTags_tagTrack TEXT;
+ALTER TABLE mediaAudioTracks ADD COLUMN metaTags_tagAlbum TEXT;
+ALTER TABLE mediaAudioTracks ADD COLUMN metaTags_tagArtist TEXT;
+ALTER TABLE mediaAudioTracks ADD COLUMN metaTags_tagAlbumArtist TEXT;
+ALTER TABLE mediaAudioTracks ADD COLUMN metaTags_tagTitle TEXT;
+ALTER TABLE mediaAudioTracks ADD COLUMN metaTags_tagSubtitle TEXT;
+ALTER TABLE mediaAudioTracks ADD COLUMN metaTags_tagSeries TEXT;
+ALTER TABLE mediaAudioTracks ADD COLUMN metaTags_tagSeriesPart TEXT;
+ALTER TABLE mediaAudioTracks ADD COLUMN metaTags_tagTrack TEXT;
 
 -- Migrate foreign key constraints on collectionsBookJoin
 CREATE TABLE IF NOT EXISTS collectionsBookJoin2 (
@@ -50,3 +49,51 @@ CREATE TABLE IF NOT EXISTS collectionsBookJoin2 (
 INSERT INTO collectionsBookJoin2 SELECT * FROM collectionsBookJoin;
 DROP TABLE collectionsBookJoin;
 ALTER TABLE collectionsBookJoin2 RENAME TO collectionsBookJoin;
+
+-- Drop and re-create home shelf tables
+DROP TABLE shelf;
+DROP TABLE shelfJoin;
+
+CREATE TABLE shelf (
+  id TEXT NOT NULL PRIMARY KEY,
+  libraryId TEXT NOT NULL,
+  label TEXT NOT NULL,
+  labelStringKey TEXT NOT NULL,
+  total INTEGER AS Int NOT NULL,
+  type TEXT AS ShelfType NOT NULL,
+  homeOrder INTEGER AS Int NOT NULL DEFAULT 0,
+
+  userId TEXT NOT NULL,
+  FOREIGN KEY (userId) REFERENCES user(id) ON DELETE CASCADE
+);
+
+CREATE TABLE shelfJoin(
+  shelfId TEXT NOT NULL,
+  entityId TEXT NOT NULL,
+  shelfOrder INTEGER AS Int NOT NULL DEFAULT 0,
+
+  PRIMARY KEY (shelfId, entityId),
+  FOREIGN KEY (shelfId) REFERENCES shelf(id) ON DELETE CASCADE
+);
+
+-- Drop and re-create series tables
+DROP TABLE series;
+
+CREATE TABLE series (
+  id TEXT NOT NULL PRIMARY KEY,
+  name TEXT NOT NULL,
+  description TEXT,
+  addedAt INTEGER NOT NULL,
+  updatedAt INTEGER NOT NULL,
+
+  inProgress INTEGER AS Boolean NOT NULL DEFAULT 0,
+  hasActiveBook INTEGER AS Boolean NOT NULL DEFAULT 0,
+  hideFromContinueListening INTEGER AS Boolean NOT NULL DEFAULT 0,
+  bookInProgressLastUpdate INTEGER,
+  firstBookUnreadId TEXT,
+
+  libraryId TEXT NOT NULL,
+  userId TEXT NOT NULL,
+
+  FOREIGN KEY (userId) REFERENCES user(id) ON DELETE CASCADE
+);
