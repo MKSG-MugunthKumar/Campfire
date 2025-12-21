@@ -2,7 +2,8 @@ package app.campfire.network
 
 import app.campfire.core.coroutines.DispatcherProvider
 import app.campfire.core.di.AppScope
-import app.campfire.network.KtorAudioBookShelfApi.Companion.HEADER_SERVER_URL
+import app.campfire.network.di.ReturnTokens
+import app.campfire.network.di.ServerUrl
 import app.campfire.network.envelopes.LoginRequest
 import app.campfire.network.envelopes.LoginResponse
 import app.campfire.network.envelopes.PingResponse
@@ -13,12 +14,14 @@ import io.ktor.client.call.body
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.defaultRequest
 import io.ktor.client.request.get
+import io.ktor.client.request.header
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.request.url
 import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
+import io.ktor.http.HttpHeaders
 import io.ktor.http.Url
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
@@ -57,6 +60,7 @@ class KtorAuthAudioBookShelfApi(
     password: String,
   ): Result<LoginResponse> = trySendRequest {
     client.post {
+      header(HttpHeaders.ReturnTokens, "true")
       url("${cleanServerUrl(serverUrl)}/login")
       contentType(ContentType.Application.Json)
       setBody(LoginRequest(username, password))
@@ -70,7 +74,7 @@ class KtorAuthAudioBookShelfApi(
     try {
       val response = request()
       if (response.status.isSuccess()) {
-        val originServerUrl = response.call.request.headers[HEADER_SERVER_URL]
+        val originServerUrl = response.call.request.headers[HttpHeaders.ServerUrl]
         val body = responseMapper(response)
         if (body is NetworkModel && originServerUrl != null) {
           body.applyOrigin(RequestOrigin.Url(originServerUrl))

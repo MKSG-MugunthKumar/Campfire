@@ -3,9 +3,14 @@ package app.campfire.network
 import app.campfire.account.api.AccountManager
 import app.campfire.core.coroutines.DispatcherProvider
 import app.campfire.core.di.UserScope
+import app.campfire.core.logging.LogPriority
+import app.campfire.core.logging.bark
 import app.campfire.core.session.UserSession
-import app.campfire.core.session.serverUrl
+import app.campfire.core.session.requireServerUrl
+import app.campfire.core.session.requiredUserId
 import app.campfire.core.session.userId
+import app.campfire.network.di.RefreshToken
+import app.campfire.network.di.ServerUrl
 import app.campfire.network.envelopes.AddBookToCollectionRequest
 import app.campfire.network.envelopes.AllLibrariesResponse
 import app.campfire.network.envelopes.AuthorResponse
@@ -13,6 +18,7 @@ import app.campfire.network.envelopes.BatchBooksRequest
 import app.campfire.network.envelopes.CollectionsResponse
 import app.campfire.network.envelopes.CreateBookmarkRequest
 import app.campfire.network.envelopes.LibraryItemsResponse
+import app.campfire.network.envelopes.LoginResponse
 import app.campfire.network.envelopes.MediaProgressUpdatePayload
 import app.campfire.network.envelopes.MinifiedLibraryItemsResponse
 import app.campfire.network.envelopes.NewCollectionRequest
@@ -41,10 +47,12 @@ import app.campfire.network.models.User
 import com.r0adkll.kimchi.annotations.ContributesBinding
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
-import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.client.plugins.defaultRequest
+import io.ktor.client.plugins.auth.Auth
+import io.ktor.client.plugins.auth.providers.bearer
 import io.ktor.client.request.HttpRequestBuilder
+import io.ktor.client.request.bearerAuth
 import io.ktor.client.request.header
+import io.ktor.client.request.post
 import io.ktor.client.request.request
 import io.ktor.client.request.setBody
 import io.ktor.client.request.url
@@ -59,7 +67,6 @@ import io.ktor.http.contentType
 import io.ktor.http.encodeURLQueryComponent
 import io.ktor.http.isSuccess
 import io.ktor.http.takeFrom
-import io.ktor.serialization.kotlinx.json.json
 import io.ktor.util.encodeBase64
 import kotlinx.coroutines.withContext
 import kotlinx.io.IOException
@@ -76,11 +83,35 @@ class KtorAudioBookShelfApi(
 
   private val client by lazy {
     httpClient.config {
-      defaultRequest {
-      }
+      install(Auth) {
+        bearer {
+          refreshTokens {
+            val tokens = accountManager.getToken(userSession.requiredUserId)
+            val newTokenResponse = client.post {
+              val currentServerUrl = userSession.requireServerUrl
+              url("${cleanServerUrl(currentServerUrl)}/auth/refresh")
+              tokens?.refreshToken?.let {
+                header(HttpHeaders.RefreshToken, it)
+              }
+              markAsRefreshTokenRequest()
+            }
 
-      install(ContentNegotiation) {
-        json()
+            return@refreshTokens if (newTokenResponse.status.isSuccess()) {
+              try {
+                val newToken = newTokenResponse.body<LoginResponse>().asAbsToken()
+                accountManager.updateToken(userSession.requiredUserId, newToken)
+                newToken.asBearerTokens()
+              } catch (e: Exception) {
+                bark("KtorClient", LogPriority.ERROR) { "Something went wrong trying to parse refresh token response" }
+                null
+              }
+            } else {
+              // TODO: Handle case where account can no-longer auth due to expired refresh token
+              bark("KtorClient", LogPriority.ERROR) { "Refresh token request failed!" }
+              null
+            }
+          }
+        }
       }
     }
   }
@@ -106,18 +137,20 @@ class KtorAudioBookShelfApi(
     limit: Int,
   ): Result<List<LibraryItemExpanded>> {
     return trySendRequest<LibraryItemsResponse> {
-      hydratedClientRequest({
-        appendPathSegments("api", "libraries", libraryId, "items")
-        parameters.append("minified", "0")
-        filter?.let { f ->
-          val filterValue = "${f.group}.${f.value.encodeBase64().encodeURLQueryComponent()}"
-          parameters.append("filter", filterValue)
-        }
-        sortMode?.let { parameters.append("sort", it) }
-        if (sortDescending) parameters.append("sort_desc", "1")
-        parameters.append("page", page.toString())
-        parameters.append("limit", limit.toString())
-      })
+      hydratedClientRequest(
+        {
+          appendPathSegments("api", "libraries", libraryId, "items")
+          parameters.append("minified", "0")
+          filter?.let { f ->
+            val filterValue = "${f.group}.${f.value.encodeBase64().encodeURLQueryComponent()}"
+            parameters.append("filter", filterValue)
+          }
+          sortMode?.let { parameters.append("sort", it) }
+          if (sortDescending) parameters.append("sort_desc", "1")
+          parameters.append("page", page.toString())
+          parameters.append("limit", limit.toString())
+        },
+      )
     }.map { it.results }
   }
 
@@ -134,18 +167,20 @@ class KtorAudioBookShelfApi(
     limit: Int,
   ): Result<PagedResponse<LibraryItemMinified<MinifiedBookMetadata>>> {
     return trySendRequest<MinifiedLibraryItemsResponse> {
-      hydratedClientRequest({
-        appendPathSegments("api", "libraries", libraryId, "items")
-        parameters.append("minified", "1")
-        filter?.let { f ->
-          val filterValue = "${f.group}.${f.value.encodeBase64().encodeURLQueryComponent()}"
-          parameters.append("filter", filterValue)
-        }
-        sortMode?.let { parameters.append("sort", it) }
-        if (sortDescending) parameters.append("sort_desc", "1")
-        if (page != INVALID) parameters.append("page", page.toString())
-        if (limit != INVALID) parameters.append("limit", limit.toString())
-      })
+      hydratedClientRequest(
+        {
+          appendPathSegments("api", "libraries", libraryId, "items")
+          parameters.append("minified", "1")
+          filter?.let { f ->
+            val filterValue = "${f.group}.${f.value.encodeBase64().encodeURLQueryComponent()}"
+            parameters.append("filter", filterValue)
+          }
+          sortMode?.let { parameters.append("sort", it) }
+          if (sortDescending) parameters.append("sort_desc", "1")
+          if (page != INVALID) parameters.append("page", page.toString())
+          if (limit != INVALID) parameters.append("limit", limit.toString())
+        },
+      )
     }.map {
       PagedResponse(
         data = it.results,
@@ -389,7 +424,7 @@ class KtorAudioBookShelfApi(
     try {
       val response = request()
       if (response.status.isSuccess()) {
-        val originServerUrl = response.call.request.headers[HEADER_SERVER_URL]
+        val originServerUrl = response.call.request.headers[HttpHeaders.ServerUrl]
         val body = responseMapper(response)
         if (body is NetworkModel && originServerUrl != null) {
           body.applyOrigin(RequestOrigin.Url(originServerUrl))
@@ -420,19 +455,15 @@ class KtorAudioBookShelfApi(
     endpoint: String,
     builder: HttpRequestBuilder.() -> Unit = { },
   ): HttpResponse {
-    val currentServerUrl = userSession.serverUrl
-      ?: throw IllegalStateException("You must be logged in to perform this request")
-    val currentUserId = userSession.userId
-      ?: throw IllegalStateException("You must be logged in to perform this request")
-    val token = accountManager.getToken(currentUserId)
-
+    val currentServerUrl = userSession.requireServerUrl
+    val tokens = accountManager.getToken(userSession.requiredUserId)
     return client.request {
       url("${cleanServerUrl(currentServerUrl)}${if (!endpoint.startsWith("/")) "/" else ""}$endpoint")
-      token?.let {
-        header(HttpHeaders.Authorization, "Bearer $it")
-      }
-      header(HEADER_SERVER_URL, currentServerUrl)
+      header(HttpHeaders.ServerUrl, currentServerUrl)
       contentType(ContentType.Application.Json)
+      tokens?.let {
+        bearerAuth(it.accessToken)
+      }
       builder()
     }
   }
@@ -441,26 +472,20 @@ class KtorAudioBookShelfApi(
     urlBuilder: URLBuilder.() -> Unit,
     builder: HttpRequestBuilder.() -> Unit = { },
   ): HttpResponse {
-    val currentServerUrl = userSession.serverUrl
-      ?: throw IllegalStateException("You must be logged in to perform this request")
-    val currentUserId = userSession.userId
-      ?: throw IllegalStateException("You must be logged in to perform this request")
-    val token = accountManager.getToken(currentUserId)
-      ?: throw IllegalStateException("No authentication found for the url $currentServerUrl")
+    val currentServerUrl = userSession.requireServerUrl
+    val tokens = accountManager.getToken(userSession.requiredUserId)
     return client.request {
       url {
         takeFrom(cleanServerUrl(currentServerUrl))
         urlBuilder()
       }
-      header(HttpHeaders.Authorization, "Bearer $token")
-      header(HEADER_SERVER_URL, currentServerUrl)
+      header(HttpHeaders.ServerUrl, currentServerUrl)
       contentType(ContentType.Application.Json)
+      tokens?.let {
+        bearerAuth(it.accessToken)
+      }
       builder()
     }
-  }
-
-  companion object {
-    internal const val HEADER_SERVER_URL = "X-Server-Url"
   }
 }
 
