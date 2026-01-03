@@ -8,6 +8,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import app.campfire.auth.api.AuthRepository
+import app.campfire.auth.api.model.AUTH_METHOD_LOCAL
+import app.campfire.auth.api.model.AUTH_METHOD_OPENID
 import app.campfire.auth.ui.BuildConfig
 import app.campfire.auth.ui.login.LoginUiEvent.AddCampsite
 import app.campfire.auth.ui.login.LoginUiEvent.ChangeTent
@@ -20,6 +22,7 @@ import app.campfire.common.screens.LoginScreen
 import app.campfire.core.di.UserScope
 import app.campfire.core.extensions.capitalized
 import app.campfire.core.model.Tent
+import app.campfire.network.oidc.AuthorizationFlow
 import coil3.toUri
 import com.r0adkll.kimchi.circuit.annotations.CircuitInject
 import com.slack.circuit.runtime.Navigator
@@ -35,6 +38,7 @@ import okio.IOException
 class LoginPresenter(
   @Assisted private val navigator: Navigator,
   private val authRepository: AuthRepository,
+  private val oauthAuthorizationFlow: AuthorizationFlow,
 ) : Presenter<LoginUiState> {
 
   @Composable
@@ -50,11 +54,18 @@ class LoginPresenter(
     var isAuthenticating by remember { mutableStateOf(false) }
     var authError by remember { mutableStateOf<AuthError?>(null) }
 
+    // Clear any auth errors if the inputs change
+    LaunchedEffect(serverUrl, username, password) {
+      if (authError != null) {
+        authError = null
+      }
+    }
+
     val connectionState = connectionState(serverUrl)
 
     LaunchedEffect(serverUrl, connectionState) {
       serverUrl.toUri().authority?.split('.')?.firstOrNull()?.let {
-        if (serverName.isBlank() && connectionState == ConnectionState.Success) {
+        if (serverName.isBlank() && connectionState is ConnectionState.Success) {
           serverName = it.capitalized()
         }
       }
@@ -78,10 +89,11 @@ class LoginPresenter(
         is Password -> password = event.password
         is ServerName -> serverName = event.serverName
         is ServerUrl -> serverUrl = event.url
+
         is AddCampsite -> {
           // Validate that we can actually add a campsite
           if (
-            connectionState != ConnectionState.Success ||
+            connectionState !is ConnectionState.Success ||
             username.isBlank() ||
             password.isBlank()
           ) {
@@ -106,6 +118,34 @@ class LoginPresenter(
             }
           }
         }
+
+        is LoginUiEvent.StartOpenIdAuth -> {
+          isAuthenticating = true
+          authError = null
+          coroutineScope.launch {
+            oauthAuthorizationFlow.getAuthorization(serverUrl)
+              .onSuccess { authorization ->
+                authRepository.authenticate(
+                  serverUrl = serverUrl,
+                  serverName = serverName,
+                  codeVerifier = authorization.codeVerifier,
+                  code = authorization.code,
+                  state = authorization.state,
+                  tent = tent,
+                ).onFailure { e ->
+                  isAuthenticating = false
+                  authError = when (e.cause) {
+                    is IOException -> AuthError.NetworkError
+                    else -> AuthError.InvalidCredentials
+                  }
+                }
+              }
+              .onFailure {
+                isAuthenticating = false
+                authError = AuthError.OAuthError
+              }
+          }
+        }
       }
     }
   }
@@ -122,20 +162,29 @@ class LoginPresenter(
 
       val uri = serverUrl.toUri()
       if (uri.scheme == null || uri.authority == null) {
-        connectionState = ConnectionState.Error
+        connectionState = ConnectionState.Error(IllegalArgumentException("Invalid URL"))
         return@LaunchedEffect
       }
 
-      val result = try {
-        authRepository.ping(serverUrl)
-      } catch (e: Exception) {
-        false
-      }
-      connectionState = if (result) {
-        ConnectionState.Success
-      } else {
-        ConnectionState.Error
-      }
+      authRepository.status(serverUrl)
+        .onSuccess { status ->
+          connectionState = ConnectionState.Success(
+            AuthMethodState(
+              passwordAuthEnabled = status.authMethods.contains(AUTH_METHOD_LOCAL),
+              openIdState = if (status.authMethods.contains(AUTH_METHOD_OPENID)) {
+                OpenIdUiState(
+                  customMessage = status.authFormData?.customMessage,
+                  buttonText = status.authFormData?.openIdButtonText,
+                )
+              } else {
+                null
+              },
+            ),
+          )
+        }
+        .onFailure { e ->
+          connectionState = ConnectionState.Error(e)
+        }
     }
 
     return connectionState

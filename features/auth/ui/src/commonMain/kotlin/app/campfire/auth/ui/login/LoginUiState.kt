@@ -1,5 +1,6 @@
 package app.campfire.auth.ui.login
 
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
 import app.campfire.core.model.Tent
 import com.slack.circuit.runtime.CircuitUiEvent
@@ -15,8 +16,21 @@ data class LoginUiState(
   val password: String,
   val isAuthenticating: Boolean,
   val authError: AuthError?,
+
   val eventSink: (LoginUiEvent) -> Unit,
 ) : CircuitUiState
+
+@Immutable
+data class OpenIdUiState(
+  val customMessage: String?,
+  val buttonText: String?,
+)
+
+@Immutable
+data class AuthMethodState(
+  val passwordAuthEnabled: Boolean,
+  val openIdState: OpenIdUiState?,
+)
 
 sealed interface LoginUiEvent : CircuitUiEvent {
   data object NavigateBack : LoginUiEvent
@@ -26,15 +40,17 @@ sealed interface LoginUiEvent : CircuitUiEvent {
   data class UserName(val userName: String) : LoginUiEvent
   data class Password(val password: String) : LoginUiEvent
   data object AddCampsite : LoginUiEvent
+  data object StartOpenIdAuth : LoginUiEvent
 }
 
 sealed interface AuthError {
   data object InvalidCredentials : AuthError
   data object NetworkError : AuthError
+  data object OAuthError : AuthError
 }
 
-enum class ConnectionState {
-  Loading,
-  Error,
-  Success,
+sealed interface ConnectionState {
+  data object Loading : ConnectionState
+  data class Error(val cause: Throwable) : ConnectionState
+  data class Success(val authMethodState: AuthMethodState) : ConnectionState
 }

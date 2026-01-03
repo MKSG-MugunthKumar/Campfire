@@ -74,6 +74,7 @@ import campfire.features.auth.ui.generated.resources.Res
 import campfire.features.auth.ui.generated.resources.invalid_server_url
 import campfire.features.auth.ui.generated.resources.label_login_error_auth
 import campfire.features.auth.ui.generated.resources.label_login_error_network
+import campfire.features.auth.ui.generated.resources.label_login_error_oauth
 import campfire.features.auth.ui.generated.resources.label_password
 import campfire.features.auth.ui.generated.resources.label_server_name_placeholder
 import campfire.features.auth.ui.generated.resources.label_server_url
@@ -125,6 +126,7 @@ internal fun ServerCard(
       ),
   ) {
     ServerNameAndIcon(
+      enabled = !isAuthenticating,
       tent = tent,
       onTentChange = onTentChange,
       name = serverName,
@@ -138,6 +140,7 @@ internal fun ServerCard(
     )
 
     OutlinedTextField(
+      enabled = !isAuthenticating,
       value = serverUrl,
       onValueChange = onServerUrlChange,
       label = { Text(stringResource(Res.string.label_server_url)) },
@@ -152,8 +155,8 @@ internal fun ServerCard(
           Text(
             when (connectionState) {
               ConnectionState.Loading -> stringResource(Res.string.loading_server_url)
-              ConnectionState.Error -> stringResource(Res.string.invalid_server_url)
-              ConnectionState.Success -> stringResource(Res.string.valid_server_url)
+              is ConnectionState.Error -> stringResource(Res.string.invalid_server_url)
+              is ConnectionState.Success -> stringResource(Res.string.valid_server_url)
             },
           )
         }
@@ -188,8 +191,9 @@ internal fun ServerCard(
     )
 
     AnimatedVisibility(
-      visible = connectionState == ConnectionState.Success,
+      visible = connectionState is ConnectionState.Success,
     ) {
+      val authMethodState = (connectionState as? ConnectionState.Success)?.authMethodState
       Column(
         Modifier.padding(
           start = 16.dp,
@@ -197,60 +201,64 @@ internal fun ServerCard(
           bottom = 16.dp,
         ),
       ) {
-        OutlinedTextField(
-          value = username,
-          onValueChange = onUsernameChange,
-          label = { Text(stringResource(Res.string.label_username)) },
-          leadingIcon = { Icon(Icons.Rounded.Person, contentDescription = null) },
-          keyboardOptions = KeyboardOptions(
-            keyboardType = KeyboardType.Email,
-            imeAction = ImeAction.Next,
-          ),
-          modifier = Modifier
-            .fillMaxWidth()
-            .focusRequester(usernameFocus)
-            .focusProperties {
-              previous = serverUrlFocus
-              next = passwordFocus
-            }
-            .semantics {
-              contentType = ContentType.Username
-            },
-        )
+        if (authMethodState?.passwordAuthEnabled == true) {
+          OutlinedTextField(
+            enabled = !isAuthenticating,
+            value = username,
+            onValueChange = onUsernameChange,
+            label = { Text(stringResource(Res.string.label_username)) },
+            leadingIcon = { Icon(Icons.Rounded.Person, contentDescription = null) },
+            keyboardOptions = KeyboardOptions(
+              keyboardType = KeyboardType.Email,
+              imeAction = ImeAction.Next,
+            ),
+            modifier = Modifier
+              .fillMaxWidth()
+              .focusRequester(usernameFocus)
+              .focusProperties {
+                previous = serverUrlFocus
+                next = passwordFocus
+              }
+              .semantics {
+                contentType = ContentType.Username
+              },
+          )
 
-        Spacer(Modifier.height(8.dp))
+          Spacer(Modifier.height(8.dp))
 
-        var showPassword by remember { mutableStateOf(false) }
-        OutlinedTextField(
-          value = password,
-          onValueChange = onPasswordChange,
-          label = { Text(stringResource(Res.string.label_password)) },
-          leadingIcon = { Icon(Icons.Rounded.Password, contentDescription = null) },
-          trailingIcon = {
-            IconButton(
-              onClick = { showPassword = !showPassword },
-            ) {
-              Icon(
-                if (showPassword) Icons.Rounded.Visibility else Icons.Rounded.VisibilityOff,
-                contentDescription = null,
-              )
-            }
-          },
-          visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
-          keyboardOptions = KeyboardOptions(
-            keyboardType = KeyboardType.Password,
-            imeAction = ImeAction.Go,
-          ),
-          keyboardActions = KeyboardActions(
-            onGo = { onGo() },
-          ),
-          modifier = Modifier
-            .fillMaxWidth()
-            .focusRequester(passwordFocus)
-            .semantics {
-              contentType = ContentType.Password
+          var showPassword by remember { mutableStateOf(false) }
+          OutlinedTextField(
+            enabled = !isAuthenticating,
+            value = password,
+            onValueChange = onPasswordChange,
+            label = { Text(stringResource(Res.string.label_password)) },
+            leadingIcon = { Icon(Icons.Rounded.Password, contentDescription = null) },
+            trailingIcon = {
+              IconButton(
+                onClick = { showPassword = !showPassword },
+              ) {
+                Icon(
+                  if (showPassword) Icons.Rounded.Visibility else Icons.Rounded.VisibilityOff,
+                  contentDescription = null,
+                )
+              }
             },
-        )
+            visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
+            keyboardOptions = KeyboardOptions(
+              keyboardType = KeyboardType.Password,
+              imeAction = ImeAction.Go,
+            ),
+            keyboardActions = KeyboardActions(
+              onGo = { onGo() },
+            ),
+            modifier = Modifier
+              .fillMaxWidth()
+              .focusRequester(passwordFocus)
+              .semantics {
+                contentType = ContentType.Password
+              },
+          )
+        }
 
         if (authError != null) {
           Spacer(Modifier.height(16.dp))
@@ -260,6 +268,7 @@ internal fun ServerCard(
               when (authError) {
                 AuthError.InvalidCredentials -> Res.string.label_login_error_auth
                 AuthError.NetworkError -> Res.string.label_login_error_network
+                AuthError.OAuthError -> Res.string.label_login_error_oauth
               },
             ),
             style = MaterialTheme.typography.labelMedium,
@@ -274,6 +283,7 @@ internal fun ServerCard(
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 private fun ServerNameAndIcon(
+  enabled: Boolean,
   tent: Tent,
   onTentChange: (Tent) -> Unit,
   name: String,
@@ -343,6 +353,7 @@ private fun ServerNameAndIcon(
     Spacer(Modifier.width(16.dp))
     Box {
       BasicTextField(
+        enabled = enabled,
         value = name,
         onValueChange = onNameChange,
         textStyle = MaterialTheme.typography.titleMedium.copy(
