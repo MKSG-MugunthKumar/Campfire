@@ -6,6 +6,7 @@ import app.campfire.account.api.ServerRepository
 import app.campfire.account.api.UserSessionManager
 import app.campfire.account.api.di.UserGraphManager
 import app.campfire.account.server.LogoutUseCase
+import app.campfire.account.storage.ExtraHeaderStorage
 import app.campfire.account.storage.TokenStorage
 import app.campfire.core.di.AppScope
 import app.campfire.core.di.qualifier.ForScope
@@ -29,6 +30,7 @@ class DefaultAccountManager(
   private val settings: CampfireSettings,
   private val userSessionManager: UserSessionManager,
   private val tokenStorage: TokenStorage,
+  private val extraHeaderStorage: ExtraHeaderStorage,
   private val logoutUseCase: LogoutUseCase,
   private val serverRepository: ServerRepository,
   private val userGraphManager: UserGraphManager,
@@ -47,10 +49,16 @@ class DefaultAccountManager(
     serverUrl: String,
     accessToken: String,
     refreshToken: String?,
+    extraHeaders: Map<String, String>?,
     user: User,
   ) = withContext(accountManagerCoroutineContext) {
     // Store the access token
     tokenStorage.put(user.id, AbsToken(accessToken, refreshToken))
+
+    // Store the extra headers, if any
+    extraHeaders?.let { headers ->
+      extraHeaderStorage.put(user.id, headers)
+    }
 
     // Check for other accounts
     val hasOtherAccounts = serverRepository.getAllServers().any { it.user.id != user.id }
@@ -94,8 +102,9 @@ class DefaultAccountManager(
       }
     }
 
-    // Delete the accounts token
+    // Delete the accounts token / data
     tokenStorage.remove(server.user.id)
+    extraHeaderStorage.remove(server.user.id)
 
     // Delete the accounts data
     logoutUseCase.execute(server)
@@ -107,6 +116,10 @@ class DefaultAccountManager(
 
   override suspend fun updateToken(userId: UserId, newToken: AbsToken) {
     tokenStorage.put(userId, newToken)
+  }
+
+  override suspend fun getExtraHeaders(userId: UserId): Map<String, String>? {
+    return extraHeaderStorage.get(userId)
   }
 
   private suspend inline fun changeSession(block: suspend () -> UserSession) {

@@ -12,6 +12,7 @@ import app.campfire.auth.api.model.AUTH_METHOD_LOCAL
 import app.campfire.auth.api.model.AUTH_METHOD_OPENID
 import app.campfire.auth.ui.BuildConfig
 import app.campfire.auth.ui.login.LoginUiEvent.AddCampsite
+import app.campfire.auth.ui.login.LoginUiEvent.ChangeNetworkSettings
 import app.campfire.auth.ui.login.LoginUiEvent.ChangeTent
 import app.campfire.auth.ui.login.LoginUiEvent.NavigateBack
 import app.campfire.auth.ui.login.LoginUiEvent.Password
@@ -21,6 +22,7 @@ import app.campfire.auth.ui.login.LoginUiEvent.UserName
 import app.campfire.common.screens.LoginScreen
 import app.campfire.core.di.UserScope
 import app.campfire.core.extensions.capitalized
+import app.campfire.core.model.NetworkSettings
 import app.campfire.core.model.Tent
 import app.campfire.network.oidc.AuthorizationFlow
 import coil3.toUri
@@ -48,6 +50,7 @@ class LoginPresenter(
     var tent by remember { mutableStateOf(Tent.Default) }
     var serverName by remember { mutableStateOf("") }
     var serverUrl by remember { mutableStateOf(BuildConfig.TEST_SERVER_URL ?: "") }
+    var networkSettings by remember { mutableStateOf<NetworkSettings?>(null) }
     var username by remember { mutableStateOf(BuildConfig.TEST_USERNAME ?: "") }
     var password by remember { mutableStateOf(BuildConfig.TEST_PASSWORD ?: "") }
 
@@ -61,7 +64,7 @@ class LoginPresenter(
       }
     }
 
-    val connectionState = connectionState(serverUrl)
+    val connectionState = connectionState(serverUrl, networkSettings)
 
     LaunchedEffect(serverUrl, connectionState) {
       serverUrl.toUri().authority?.split('.')?.firstOrNull()?.let {
@@ -80,11 +83,13 @@ class LoginPresenter(
       isAuthenticating = isAuthenticating,
       authError = authError,
       connectionState = connectionState,
+      networkSettings = networkSettings,
     ) { event ->
       when (event) {
         NavigateBack -> navigator.pop()
 
         is ChangeTent -> tent = event.tent
+        is ChangeNetworkSettings -> networkSettings = event.settings
         is UserName -> username = event.userName
         is Password -> password = event.password
         is ServerName -> serverName = event.serverName
@@ -109,6 +114,7 @@ class LoginPresenter(
               username = username,
               password = password,
               tent = tent,
+              networkSettings = networkSettings,
             ).onFailure {
               isAuthenticating = false
               authError = when (it.cause) {
@@ -123,7 +129,7 @@ class LoginPresenter(
           isAuthenticating = true
           authError = null
           coroutineScope.launch {
-            oauthAuthorizationFlow.getAuthorization(serverUrl)
+            oauthAuthorizationFlow.getAuthorization(serverUrl, networkSettings?.extraHeaders)
               .onSuccess { authorization ->
                 authRepository.authenticate(
                   serverUrl = serverUrl,
@@ -132,6 +138,7 @@ class LoginPresenter(
                   code = authorization.code,
                   state = authorization.state,
                   tent = tent,
+                  networkSettings = networkSettings,
                 ).onFailure { e ->
                   isAuthenticating = false
                   authError = when (e.cause) {
@@ -151,10 +158,13 @@ class LoginPresenter(
   }
 
   @Composable
-  private fun connectionState(serverUrl: String): ConnectionState? {
+  private fun connectionState(
+    serverUrl: String,
+    networkSettings: NetworkSettings?,
+  ): ConnectionState? {
     var connectionState by remember { mutableStateOf<ConnectionState?>(null) }
 
-    LaunchedEffect(serverUrl) {
+    LaunchedEffect(serverUrl, networkSettings) {
       connectionState = ConnectionState.Loading
 
       // Give the user some time to type the URL
@@ -166,7 +176,7 @@ class LoginPresenter(
         return@LaunchedEffect
       }
 
-      authRepository.status(serverUrl)
+      authRepository.status(serverUrl, networkSettings)
         .onSuccess { status ->
           connectionState = ConnectionState.Success(
             AuthMethodState(
