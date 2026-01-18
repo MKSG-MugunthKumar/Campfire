@@ -17,6 +17,8 @@ import app.campfire.core.model.User
 import app.campfire.core.model.UserId
 import app.campfire.core.session.UserSession
 import app.campfire.core.session.userId
+import app.campfire.core.toast.GlobalToaster
+import app.campfire.core.toast.Toast
 import app.campfire.settings.api.CampfireSettings
 import com.r0adkll.kimchi.annotations.ContributesBinding
 import kotlinx.coroutines.CoroutineExceptionHandler
@@ -66,6 +68,34 @@ class DefaultAccountManager(
     }
   }
 
+  override suspend fun invalidateAccount(user: User) {
+    // Invalidate token storage
+    tokenStorage.remove(user.id)
+
+    // Notify user using the global toaster
+    GlobalToaster.show(
+      message = "'${user.name}' was logged out and requires reauthentication.",
+      duration = Toast.Duration.LONG,
+    )
+
+    // Check for other accounts, if they are valid, switch to them
+    // Otherwise, switch to re-auth session
+    changeSession {
+      val allAccounts = serverRepository.getAllServers()
+      val remainingAccounts = allAccounts.filter { it.user.id != user.id }
+
+      if (remainingAccounts.isEmpty()) {
+        val currentAccount = allAccounts.firstOrNull { it.user.id == user.id }
+        currentAccount?.let { server ->
+          UserSession.NeedsAuthentication(server)
+        } ?: UserSession.LoggedOut
+      } else {
+        val newAccount = remainingAccounts.first()
+        UserSession.LoggedIn(newAccount.user)
+      }
+    }
+  }
+
   override suspend fun switchAccount(user: User) = withContext(accountManagerCoroutineContext) {
     // If we are switching to the current account, just ignore the action
     if (user.id == settings.currentUserId) return@withContext
@@ -109,6 +139,14 @@ class DefaultAccountManager(
 
   override suspend fun getToken(userId: UserId): AbsToken? {
     return tokenStorage.get(userId)
+  }
+
+  override suspend fun getLegacyToken(userId: UserId): String? {
+    return tokenStorage.getLegacy(userId)
+  }
+
+  override suspend fun removeLegacyToken(userId: UserId) {
+    tokenStorage.removeLegacy(userId)
   }
 
   override suspend fun updateToken(userId: UserId, newToken: AbsToken) {

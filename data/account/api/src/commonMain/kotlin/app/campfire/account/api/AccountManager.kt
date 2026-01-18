@@ -28,6 +28,12 @@ interface AccountManager {
   )
 
   /**
+   * Invalidate an account to require re-authentication by the user
+   *
+   */
+  suspend fun invalidateAccount(user: User)
+
+  /**
    * Switch the current account/session to a new user
    * @param user the user to switch the account to
    */
@@ -45,6 +51,20 @@ interface AccountManager {
    * @param userId the id of the user to fetch a token for
    */
   suspend fun getToken(userId: UserId): AbsToken?
+
+  /**
+   * Get the legacy auth token for a given account to use to migrate
+   * to the new access/refresh bearer token system. \
+   *
+   * @param userId the id of the user to fetch a token for
+   * @return the legacy auth token, or null if none exists
+   */
+  suspend fun getLegacyToken(userId: UserId): String?
+
+  /**
+   * Delete the legacy token for a user
+   */
+  suspend fun removeLegacyToken(userId: UserId)
 
   /**
    * Update the set of tokens for a given user
