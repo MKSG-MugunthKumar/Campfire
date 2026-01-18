@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Analytics consent screen no longer re-appears after accepting it
 - Predictive back navigation causing screens to infinitely load
 
 ### Other Notes & Contributions
