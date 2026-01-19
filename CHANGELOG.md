@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+### Changed
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Other Notes & Contributions
+
+## [0.9.0-beta] - 2026-1-19
+
+### Added
+
 - OIDC Authentication
 - Offline downloads accessible from side drawer
 - Denser grid option for the Library screen
@@ -20,10 +34,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Moved palette picker on item detail from cover image to top bar
 - Improved navigation shared element animations
 
-### Deprecated
-
-### Removed
-
 ### Fixed
 
 - Analytics consent screen no longer re-appears after accepting it
@@ -32,8 +42,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Search overlay popping up when adding bookmarks
 - Bug where home feed would be empty when using multiple accounts/libraries
 - Library filter(s) now persist between screens and configuration changes
-
-### Other Notes & Contributions
 
 ## [0.8.0-beta] - 2025-12-16
 
