@@ -15,6 +15,8 @@ import campfire.features.settings.ui.generated.resources.setting_playback_forwar
 import campfire.features.settings.ui.generated.resources.setting_playback_forward_title
 import campfire.features.settings.ui.generated.resources.setting_playback_mp3seeking_subtitle
 import campfire.features.settings.ui.generated.resources.setting_playback_mp3seeking_title
+import campfire.features.settings.ui.generated.resources.setting_playback_remote_skip_subtitle
+import campfire.features.settings.ui.generated.resources.setting_playback_remote_skip_title
 import campfire.features.settings.ui.generated.resources.setting_playback_title
 import campfire.features.settings.ui.generated.resources.setting_playback_track_reset_subtitle
 import campfire.features.settings.ui.generated.resources.setting_playback_track_reset_title
@@ -70,6 +72,15 @@ internal fun PlaybackPane(
       },
       headlineContent = { Text(stringResource(Res.string.setting_playback_mp3seeking_title)) },
       supportingContent = { Text(stringResource(Res.string.setting_playback_mp3seeking_subtitle)) },
+    )
+
+    SwitchSetting(
+      value = state.playbackSettings.remoteNextPrevSkipsChapters,
+      onValueChange = {
+        state.eventSink(PlaybackSettingEvent.RemoteNextPrevSkipsChapters(it))
+      },
+      headlineContent = { Text(stringResource(Res.string.setting_playback_remote_skip_title)) },
+      supportingContent = { Text(stringResource(Res.string.setting_playback_remote_skip_subtitle)) },
     )
   }
 }

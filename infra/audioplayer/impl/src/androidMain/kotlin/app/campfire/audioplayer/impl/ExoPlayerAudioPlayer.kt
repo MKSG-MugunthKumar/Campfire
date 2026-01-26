@@ -128,8 +128,14 @@ class ExoPlayerAudioPlayer(
    * A proxy accessor for the correct player client. All listener and access goes through the
    * [castPlayer] which configures the [exoPlayer] as the local player to use when a MediaRoute
    * is not directed at remote playback.
+   *
+   * Wrapped with [RemoteControlForwardingPlayer] to intercept next/previous commands
+   * based on user settings.
    */
-  internal val player: Player = (castPlayer ?: exoPlayer).apply {
+  internal val player: Player = RemoteControlForwardingPlayer(
+    player = castPlayer ?: exoPlayer,
+    settings = settings,
+  ).apply {
     addListener(this@ExoPlayerAudioPlayer)
   }
 
