@@ -47,6 +47,7 @@ import app.campfire.ui.settings.SettingsUiEvent.DownloadsSettingEvent.ShowDownlo
 import app.campfire.ui.settings.SettingsUiEvent.PlaybackSettingEvent.BackwardTime
 import app.campfire.ui.settings.SettingsUiEvent.PlaybackSettingEvent.ForwardTime
 import app.campfire.ui.settings.SettingsUiEvent.PlaybackSettingEvent.Mp3IndexSeeking
+import app.campfire.ui.settings.SettingsUiEvent.PlaybackSettingEvent.RemoteNextPrevSkipsChapters
 import app.campfire.ui.settings.SettingsUiEvent.PlaybackSettingEvent.TrackResetThreshold
 import app.campfire.ui.settings.SettingsUiEvent.SleepSettingEvent.AutoSleepRewindAmount
 import app.campfire.ui.settings.SettingsUiEvent.SleepSettingEvent.AutoSleepRewindEnabled
@@ -118,6 +119,9 @@ class SettingsPresenter(
     val backwardTime by remember { playbackSettings.observeBackwardTimeMs() }.collectAsState()
     val trackResetThreshold by remember { playbackSettings.observeTrackResetThreshold() }.collectAsState()
     val mp3IndexSeeking by remember { playbackSettings.observeMp3IndexSeeking() }.collectAsState()
+    val remoteNextPrevSkipsChapters by remember {
+      playbackSettings.observeRemoteNextPrevSkipsChapters()
+    }.collectAsState()
 
     // Downloads Settings
     val showDownloadConfirmation by remember { settings.observeShowConfirmDownload() }
@@ -184,6 +188,7 @@ class SettingsPresenter(
         backwardTime = backwardTime.milliseconds,
         trackResetThreshold = trackResetThreshold,
         mp3IndexSeeking = mp3IndexSeeking,
+        remoteNextPrevSkipsChapters = remoteNextPrevSkipsChapters,
       ),
       sleepSettings = SleepSettingsInfo(
         shakeToReset = shakeToResetEnabled,
@@ -249,6 +254,8 @@ class SettingsPresenter(
           is BackwardTime -> playbackSettings.backwardTimeMs = event.backwardTime.inWholeMilliseconds
           is TrackResetThreshold -> playbackSettings.trackResetThreshold = event.trackResetThreshold
           is Mp3IndexSeeking -> playbackSettings.enableMp3IndexSeeking = event.mp3IndexSeeking
+          is RemoteNextPrevSkipsChapters ->
+            playbackSettings.remoteNextPrevSkipsChapters = event.enabled
         }
 
         is SettingsUiEvent.SleepSettingEvent -> when (event) {

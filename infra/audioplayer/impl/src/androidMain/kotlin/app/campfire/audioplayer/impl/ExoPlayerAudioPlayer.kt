@@ -133,6 +133,15 @@ class ExoPlayerAudioPlayer(
     addListener(this@ExoPlayerAudioPlayer)
   }
 
+  /**
+   * A wrapped version of the player that intercepts next/previous commands based on user settings.
+   * This should be used for MediaSession to handle remote control commands differently.
+   */
+  internal val remoteControlPlayer: Player = RemoteControlForwardingPlayer(
+    player = player,
+    settings = settings,
+  )
+
   private var progressJob: Job? = null
   private var fadeJob: Job? = null
   private var previousVolumeLevel: Float = 0f

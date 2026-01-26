@@ -81,7 +81,9 @@ class AudioPlayerService : MediaLibraryService() {
     // Create ExoPlayer instance and MediaSession instance that encapsulates the background
     // playback on Android.
     player = component.exoPlayerFactory.create(this)
-    session = MediaLibrarySession.Builder(this, player.player, MediaSessionCallback())
+    // Use remoteControlPlayer for MediaSession so remote control commands (Bluetooth, car stereo)
+    // can be intercepted and handled based on user settings, while in-app UI uses the direct player.
+    session = MediaLibrarySession.Builder(this, player.remoteControlPlayer, MediaSessionCallback())
       .setSessionActivity(
         PendingIntent.getActivity(
           this,
