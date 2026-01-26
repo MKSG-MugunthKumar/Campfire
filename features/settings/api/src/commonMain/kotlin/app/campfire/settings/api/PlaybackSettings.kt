@@ -20,4 +20,11 @@ interface PlaybackSettings {
   fun observePlaybackRates(): StateFlow<List<Float>>
 
   var playbackSpeed: Float
+
+  /**
+   * When true, remote control next/previous buttons skip to next/previous chapter.
+   * When false, they seek forward/backward by the configured time.
+   */
+  var remoteNextPrevSkipsChapters: Boolean
+  fun observeRemoteNextPrevSkipsChapters(): StateFlow<Boolean>
 }

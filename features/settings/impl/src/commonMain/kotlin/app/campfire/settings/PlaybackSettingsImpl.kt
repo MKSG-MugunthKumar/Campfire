@@ -73,6 +73,16 @@ class PlaybackSettingsImpl(
 
   override var playbackSpeed: Float by floatSetting(PREF_PLAYBACK_SPEED, DEFAULT_PLAYBACK_SPEED)
 
+  override var remoteNextPrevSkipsChapters: Boolean by booleanSetting(
+    PREF_REMOTE_NEXT_PREV_SKIPS_CHAPTERS,
+    DEFAULT_REMOTE_NEXT_PREV_SKIPS_CHAPTERS,
+  )
+
+  override fun observeRemoteNextPrevSkipsChapters(): StateFlow<Boolean> {
+    return flowSettings.getBooleanFlow(PREF_REMOTE_NEXT_PREV_SKIPS_CHAPTERS, DEFAULT_REMOTE_NEXT_PREV_SKIPS_CHAPTERS)
+      .stateIn(settingsScope, SharingStarted.Lazily, remoteNextPrevSkipsChapters)
+  }
+
   private fun String.asFloatList(): List<Float> = split(PLAYBACK_RATES_SEPARATOR).mapNotNull { it.toFloatOrNull() }
 }
 
@@ -90,3 +100,5 @@ internal const val DEFAULT_BACKWARD_TIME_MS = 10L * 1000L // 15s
 internal const val DEFAULT_TRACK_RESET_THRESHOLD_SECONDS = 5.0 // 5s
 internal val DEFAULT_PLAYBACK_RATES = listOf(0.5f, 0.75f, 1f, 1.5f, 2f)
 internal const val DEFAULT_PLAYBACK_SPEED = 1f
+internal const val PREF_REMOTE_NEXT_PREV_SKIPS_CHAPTERS = "pref_playback_remote_next_prev_skips_chapters"
+internal const val DEFAULT_REMOTE_NEXT_PREV_SKIPS_CHAPTERS = true

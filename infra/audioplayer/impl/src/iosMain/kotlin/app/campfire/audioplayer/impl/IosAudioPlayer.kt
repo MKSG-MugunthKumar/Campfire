@@ -380,12 +380,20 @@ class IosAudioPlayer(
     )
 
     commandCenter.nextTrackCommand.enable {
-      skipToNext()
+      if (settings.remoteNextPrevSkipsChapters) {
+        skipToNext()
+      } else {
+        seekForward()
+      }
       MPRemoteCommandHandlerStatusSuccess
     }
 
     commandCenter.previousTrackCommand.enable {
-      skipToPrevious()
+      if (settings.remoteNextPrevSkipsChapters) {
+        skipToPrevious()
+      } else {
+        seekBackward()
+      }
       MPRemoteCommandHandlerStatusSuccess
     }
 
