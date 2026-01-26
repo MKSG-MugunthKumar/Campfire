@@ -57,7 +57,12 @@ class DefaultSessionsRepository(
       },
       mediaPlayer = "campfire",
       duration = libraryItem.media.durationInMillis.milliseconds,
-      currentTime = progress?.currentTime?.seconds ?: 0.seconds,
+      currentTime = if (progress?.isFinished == true) {
+        // Reset to beginning for finished audiobooks so playback can restart
+        0.seconds
+      } else {
+        progress?.currentTime?.seconds ?: 0.seconds
+      },
       startedAt = startedAt,
     )
   }
