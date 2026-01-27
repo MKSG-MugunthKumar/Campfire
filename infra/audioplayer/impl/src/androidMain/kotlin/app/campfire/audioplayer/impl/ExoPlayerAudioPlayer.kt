@@ -137,10 +137,24 @@ class ExoPlayerAudioPlayer(
    * A wrapped version of the player that intercepts next/previous commands based on user settings.
    * This should be used for MediaSession to handle remote control commands differently.
    */
-  internal val remoteControlPlayer: Player = RemoteControlForwardingPlayer(
+  private val remoteControlForwardingPlayer = RemoteControlForwardingPlayer(
     player = player,
     settings = settings,
+    appPackageName = context.packageName,
   )
+
+  internal val remoteControlPlayer: Player = remoteControlForwardingPlayer
+
+  /**
+   * Binds the MediaSession to the remote control forwarding player.
+   * This enables the player to identify the source of commands and apply
+   * settings only for remote controllers (Bluetooth, car stereo, etc.).
+   *
+   * Must be called after the MediaSession is created.
+   */
+  internal fun bindSession(session: androidx.media3.session.MediaSession) {
+    remoteControlForwardingPlayer.session = session
+  }
 
   private var progressJob: Job? = null
   private var fadeJob: Job? = null

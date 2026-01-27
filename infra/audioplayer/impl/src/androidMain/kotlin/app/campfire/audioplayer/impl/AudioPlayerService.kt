@@ -94,6 +94,10 @@ class AudioPlayerService : MediaLibraryService() {
       )
       .build()
 
+    // Bind the session to the player so it can identify the source of remote control commands
+    // and apply user settings only for external controllers (Bluetooth, car stereo, etc.)
+    player.bindSession(session!!)
+
     // Attach the Android playback implementation to the controller used by other parts of the
     // to access and control playback / session.
     component.audioPlayerHolder.setCurrentPlayer(player)
