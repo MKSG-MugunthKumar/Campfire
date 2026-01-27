@@ -48,6 +48,12 @@ class DefaultSessionsRepository(
     val progress = mediaProgressRepository.getProgress(libraryItemId)
     val offlineDownload = offlineDownloadManager.getForItem(libraryItem)
 
+    // If the book is finished, delete any existing session so we start fresh.
+    // This prevents the data layer from reusing an old session with position at the end.
+    if (progress?.isFinished == true) {
+      dataSource.deleteSession(libraryItemId)
+    }
+
     return dataSource.createOrStartSession(
       libraryItemId = libraryItemId,
       playMethod = if (offlineDownload.isCompleted) {

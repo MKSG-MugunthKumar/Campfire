@@ -24,6 +24,7 @@ import app.campfire.ui.settings.SettingsUiEvent.DownloadsSettingEvent.ShowDownlo
 import app.campfire.ui.settings.SettingsUiEvent.PlaybackSettingEvent.BackwardTime
 import app.campfire.ui.settings.SettingsUiEvent.PlaybackSettingEvent.ForwardTime
 import app.campfire.ui.settings.SettingsUiEvent.PlaybackSettingEvent.Mp3IndexSeeking
+import app.campfire.ui.settings.SettingsUiEvent.PlaybackSettingEvent.RemoteNextPrevSkipsChapters
 import app.campfire.ui.settings.SettingsUiEvent.PlaybackSettingEvent.TrackResetThreshold
 import app.campfire.ui.settings.SettingsUiEvent.SleepSettingEvent.AutoSleepRewindAmount
 import app.campfire.ui.settings.SettingsUiEvent.SleepSettingEvent.AutoSleepRewindEnabled
@@ -72,6 +73,7 @@ class SettingsAnalyticUiEventHandler(
       is BackwardTime -> send("backward_time", Updated, event.backwardTime.inWholeMilliseconds)
       is TrackResetThreshold -> send("track_reset_threshold", Updated, event.trackResetThreshold.inWholeMilliseconds)
       is Mp3IndexSeeking -> send("mp3_index_seeking", Updated, event.mp3IndexSeeking)
+      is RemoteNextPrevSkipsChapters -> send("remote_next_prev_skip_chapters", Updated, event.remoteNextPrevSkipsChapters)
     }
 
     is SettingsUiEvent.SleepSettingEvent -> when (event) {

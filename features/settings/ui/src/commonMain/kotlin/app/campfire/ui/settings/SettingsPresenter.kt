@@ -255,7 +255,7 @@ class SettingsPresenter(
           is TrackResetThreshold -> playbackSettings.trackResetThreshold = event.trackResetThreshold
           is Mp3IndexSeeking -> playbackSettings.enableMp3IndexSeeking = event.mp3IndexSeeking
           is RemoteNextPrevSkipsChapters ->
-            playbackSettings.remoteNextPrevSkipsChapters = event.enabled
+            playbackSettings.remoteNextPrevSkipsChapters = event.remoteNextPrevSkipsChapters
         }
 
         is SettingsUiEvent.SleepSettingEvent -> when (event) {
