@@ -8,11 +8,11 @@ import app.campfire.common.screens.AuthorDetailScreen
 import app.campfire.common.screens.SeriesDetailScreen
 import app.campfire.common.test.assert.firstInstanceOf
 import app.campfire.common.test.session
+import app.campfire.core.filter.ContentFilter
 import app.campfire.core.model.SeriesSequence
 import app.campfire.home.ui.authorMetadata
 import app.campfire.home.ui.chapter
 import app.campfire.home.ui.libraryItem
-import app.campfire.libraries.api.LibraryItemFilter
 import app.campfire.libraries.api.screen.LibraryScreen
 import app.campfire.sessions.test.FakeSessionsRepository
 import app.campfire.user.test.FakeMediaProgressRepository
@@ -152,9 +152,9 @@ private val NarratorClick = EventTest(
       .prop(LibraryScreen::filter)
       .isNotNull()
       .all {
-        prop(LibraryItemFilter::group)
+        prop(ContentFilter::group)
           .isEqualTo("narrators")
-        prop(LibraryItemFilter::value)
+        prop(ContentFilter::value)
           .isEqualTo("test_narrator")
       }
   },

@@ -1,9 +1,9 @@
 package app.campfire.settings.api
 
 import app.campfire.core.model.UserId
+import app.campfire.core.settings.ContentSortMode
 import app.campfire.core.settings.ItemDisplayState
 import app.campfire.core.settings.SortDirection
-import app.campfire.core.settings.SortMode
 import kotlinx.coroutines.flow.Flow
 
 interface CampfireSettings {
@@ -27,11 +27,23 @@ interface CampfireSettings {
   var libraryItemDisplayState: ItemDisplayState
   fun observeLibraryItemDisplayState(): Flow<ItemDisplayState>
 
-  var sortMode: SortMode
-  fun observeSortMode(): Flow<SortMode>
+  var librarySortMode: ContentSortMode
+  fun observeLibrarySortMode(): Flow<ContentSortMode>
 
-  var sortDirection: SortDirection
-  fun observeSortDirection(): Flow<SortDirection>
+  var librarySortDirection: SortDirection
+  fun observeLibrarySortDirection(): Flow<SortDirection>
+
+  var authorsSortMode: ContentSortMode
+  fun observeAuthorsSortMode(): Flow<ContentSortMode>
+
+  var authorsSortDirection: SortDirection
+  fun observeAuthorsSortDirection(): Flow<SortDirection>
+
+  var seriesSortMode: ContentSortMode
+  fun observeSeriesSortMode(): Flow<ContentSortMode>
+
+  var seriesSortDirection: SortDirection
+  fun observeSeriesSortDirection(): Flow<SortDirection>
 
   var currentUserId: UserId?
   fun observeCurrentUserId(): Flow<UserId?>

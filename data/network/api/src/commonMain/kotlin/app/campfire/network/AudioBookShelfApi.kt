@@ -41,34 +41,10 @@ interface AudioBookShelfApi {
 
   /**
    * Fetch a library's items
-   * @param libraryId the id of the library to fetch the items for
-   * @return as result with the list of library items
-   */
-  suspend fun getLibraryItems(
-    libraryId: String,
-    filter: LibraryItemFilter? = null,
-    sortMode: String? = null,
-    sortDescending: Boolean = false,
-    page: Int = 0,
-    limit: Int = 0,
-  ): Result<List<LibraryItemExpanded>>
-
-  /**
-   * DEPRECATED
-   * ----------
-   * This endpoint is deprecated, and only in use while we get a fix merged upstream for returning
-   * the expanded item models from the backend.
-   * [https://github.com/advplyr/audiobookshelf/pull/3945](https://github.com/advplyr/audiobookshelf/pull/3945)
-   *
-   * Fetch a library's items
    *
    * @param libraryId the id of the library to fetch the items for
    * @return as result with the list of library items
    */
-  @Deprecated(
-    message = "This endpoint is deprecated since it only returns the minified model",
-    replaceWith = ReplaceWith("getLibraryItems"),
-  )
   suspend fun getLibraryItemsMinified(
     libraryId: String,
     filter: LibraryItemFilter? = null,
@@ -100,7 +76,14 @@ interface AudioBookShelfApi {
   /**
    * Get a Library's list of series
    */
-  suspend fun getSeries(libraryId: String): Result<List<Series>>
+  suspend fun getSeries(
+    libraryId: String,
+    filter: LibraryItemFilter? = null,
+    sortMode: String? = null,
+    sortDescending: Boolean = false,
+    page: Int = INVALID,
+    limit: Int = INVALID,
+  ): Result<PagedResponse<Series>>
 
   /**
    * Get a specific series by its id
@@ -110,7 +93,13 @@ interface AudioBookShelfApi {
   /**
    * Get a Library's list of authors
    */
-  suspend fun getAuthors(libraryId: String): Result<List<Author>>
+  suspend fun getAuthors(
+    libraryId: String,
+    sortMode: String? = null,
+    sortDescending: Boolean = false,
+    page: Int = INVALID,
+    limit: Int = INVALID,
+  ): Result<PagedResponse<Author>>
 
   /**
    * Get a specific author

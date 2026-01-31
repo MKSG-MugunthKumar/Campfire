@@ -19,6 +19,7 @@ pluginManagement {
 
         content {
           includeGroup("com.r0adkll.swatchbuckler")
+          includeGroup("app.cash.sqldelight")
         }
       }
     }
@@ -46,6 +47,7 @@ dependencyResolutionManagement {
         mavenContent { snapshotsOnly() }
         content {
           includeGroup("com.r0adkll.swatchbuckler")
+          includeGroup("app.cash.sqldelight")
         }
       }
     }
@@ -198,6 +200,12 @@ include(
   ":features:stats:api",
   ":features:stats:impl",
   ":features:stats:ui",
+)
+include(
+  ":features:filters:api",
+  ":features:filters:impl",
+  ":features:filters:test",
+  ":features:filters:ui",
 )
 include(
   ":ui:appbar",
