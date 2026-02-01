@@ -9,16 +9,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+### Changed
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Other Notes & Contributions
+
+## [0.10.0-beta] - 2026-02-01
+
+### Added
+
 - Paging Support! Library items, series, and authors are all now paginated for large library support
 - Item progress now displays in contexts other than the Home feed
 
 ### Changed
 
 - "Play/Continue listening" button on item details is now disabled if it is the current play session
-
-### Deprecated
-
-### Removed
 
 ### Fixed
 
@@ -28,8 +38,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fast Forward / Rewind not working on Android Auto
 - Collections not being editable if you were a "root" user
 - Playback view now maintains expansion state on configuration changes
-
-### Other Notes & Contributions
 
 ## [0.9.0-beta] - 2026-01-19
 
@@ -247,6 +255,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial Alpha Release.
 
+[0.10.0-beta]: https://github.com/r0adkll/Campfire/compare/v0.9.0-beta...v0.10.0-beta
 [0.9.0-beta]: https://github.com/r0adkll/Campfire/compare/v0.8.0-beta...v0.9.0-beta
 [0.8.0-beta]: https://github.com/r0adkll/Campfire/compare/v0.7.2-beta...v0.8.0-beta
 [0.7.2-beta]: https://github.com/r0adkll/Campfire/compare/v0.7.1-beta...v0.7.2-beta

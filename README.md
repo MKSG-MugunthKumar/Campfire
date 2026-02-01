@@ -4,6 +4,8 @@
 
 # Campfire
 
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/D1D5KEED)
+
 **Campfire** is an unofficial app for [Audiobookshelf](https://www.audiobookshelf.org/) built in Kotlin/Compose Multiplatform for a more native experience than the official app.
 
 > [!IMPORTANT]
@@ -63,8 +65,6 @@ Head over to [Architecture](docs/architecture/README.md) for more detailed infor
 ## Contributing
 
 Please follow the guidelines set forth in the [CONTRIBUTING](CONTRIBUTING.md) document.
-
-<a href='https://ko-fi.com/D1D5KEED' target='_blank'><img height='36' style='border:0px;height:36px;' src='https://az743702.vo.msecnd.net/cdn/kofi1.png?v=0' border='0' alt='Buy Me a Coffee at ko-fi.com' /></a>
 
 ## License
 
