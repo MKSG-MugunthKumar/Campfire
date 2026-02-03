@@ -107,14 +107,37 @@ class TitleAndAuthorSlot(
 
       Spacer(Modifier.height(24.dp))
 
+      val authors = libraryItem.media.metadata.authors
+        .map { it.name }
+        .ifEmpty {
+          val authorName = libraryItem.media.metadata.authorName
+          if (authorName?.contains(",") == true) {
+            authorName.split(",").map { it.trim() }
+          } else {
+            authorName?.let { listOf(it) }
+              ?: emptyList()
+          }
+        }
+
+      val narrators = libraryItem.media.metadata.narrators
+        .ifEmpty {
+          val narratorName = libraryItem.media.metadata.narratorName
+          if (narratorName?.contains(",") == true) {
+            narratorName.split(",").map { it.trim() }
+          } else {
+            narratorName?.let { listOf(it) }
+              ?: emptyList()
+          }
+        }
+
       AuthorNarratorBar(
-        author = libraryItem.media.metadata.authorName,
-        narrator = libraryItem.media.metadata.narratorName,
-        onAuthorClick = {
-          eventSink(LibraryItemUiEvent.AuthorClick(libraryItem))
+        authors = authors,
+        narrators = narrators,
+        onAuthorClick = { author ->
+          eventSink(LibraryItemUiEvent.AuthorClick(libraryItem, author))
         },
-        onNarratorClick = {
-          eventSink(LibraryItemUiEvent.NarratorClick(libraryItem))
+        onNarratorClick = { narrator ->
+          eventSink(LibraryItemUiEvent.NarratorClick(libraryItem, narrator))
         },
       )
     }
