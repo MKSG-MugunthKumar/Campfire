@@ -8,16 +8,16 @@ import androidx.media3.session.MediaSession
 import app.campfire.settings.api.PlaybackSettings
 
 /**
- * A [ForwardingPlayer] that intercepts next/previous media item commands from remote controllers
- * and redirects them based on the [PlaybackSettings.remoteNextPrevSkipsChapters] setting.
+ * A [ForwardingPlayer] that intercepts next/previous media item commands from external controllers
+ * (e.g., car stereos with their own package) and redirects them based on the
+ * [PlaybackSettings.remoteNextPrevSkipsChapters] setting.
  *
- * When [remoteNextPrevSkipsChapters] is true (default), remote next/prev commands skip chapters.
+ * When [remoteNextPrevSkipsChapters] is true (default), external next/prev commands skip chapters.
  * When false, they seek forward/backward by the configured time instead.
  *
- * Commands from the local in-app UI always use the default chapter-skipping behavior,
- * regardless of the setting. This is determined by checking [MediaSession.controllerForCurrentRequest]
- * to identify whether the command originated from a remote controller (Bluetooth, car stereo,
- * media notification) or the local app UI.
+ * Note: Bluetooth is handled separately via onMediaButtonEvent in MediaSessionCallback since Media3
+ * routes Bluetooth key events through the app's own package. Media notification and Android Auto
+ * always use chapter skip because they have dedicated custom seek buttons in their layout.
  */
 @OptIn(UnstableApi::class)
 class RemoteControlForwardingPlayer(
@@ -35,27 +35,27 @@ class RemoteControlForwardingPlayer(
   /**
    * Determines if the current command is from a remote controller.
    *
-   * A command is considered "remote" if:
-   * - It comes from a different package (Bluetooth, car stereo, etc.)
-   * - It comes from the system media notification controller
+   * A command is considered "remote" if it comes from a different package (e.g., car stereo).
    *
-   * Commands from the app's own UI (same package, not notification) are considered "local".
+   * Note: Bluetooth controllers are handled separately via onMediaButtonEvent in
+   * MediaSessionCallback, since Media3 routes their events through the app's own package.
+   * Media notification and Android Auto are NOT remote because they have custom seek buttons.
    */
   private fun isRemoteController(): Boolean {
     val currentSession = session ?: return false
     val controller = currentSession.controllerForCurrentRequest ?: return false
 
-    // If it's from a different package, it's definitely remote
+    // Notification and Android Auto have custom seek buttons - skip should always be chapter skip
+    if (currentSession.isMediaNotificationController(controller) ||
+      currentSession.isAutoCompanionController(controller)) {
+      return false
+    }
+
+    // External controllers from different packages are remote
     if (controller.packageName != appPackageName) {
       return true
     }
 
-    // If it's the media notification controller (same package but system-managed), treat as remote
-    if (currentSession.isMediaNotificationController(controller)) {
-      return true
-    }
-
-    // Same package and not notification = local app UI
     return false
   }
 

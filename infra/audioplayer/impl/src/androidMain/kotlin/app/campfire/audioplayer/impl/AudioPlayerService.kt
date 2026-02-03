@@ -5,6 +5,7 @@ import android.annotation.SuppressLint
 import android.app.PendingIntent
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.view.KeyEvent
 import android.os.Build
 import android.os.Bundle
 import androidx.core.app.NotificationChannelCompat
@@ -210,6 +211,34 @@ class AudioPlayerService : MediaLibraryService() {
       }
     }
 
+    override fun onMediaButtonEvent(
+      session: MediaSession,
+      controllerInfo: MediaSession.ControllerInfo,
+      intent: Intent,
+    ): Boolean {
+      // Handle Bluetooth next/prev based on user settings.
+      // Media3 routes Bluetooth key events through this callback before processing them,
+      // allowing us to intercept and redirect next/prev to seek when the setting is disabled.
+      if (controllerInfo.packageName == BLUETOOTH_PACKAGE_NAME &&
+        !component.playbackSettings.remoteNextPrevSkipsChapters
+      ) {
+        val keyEvent = intent.getParcelableExtra<KeyEvent>(Intent.EXTRA_KEY_EVENT)
+        if (keyEvent?.action == KeyEvent.ACTION_DOWN) {
+          when (keyEvent.keyCode) {
+            KeyEvent.KEYCODE_MEDIA_NEXT -> {
+              player.seekForward()
+              return true
+            }
+            KeyEvent.KEYCODE_MEDIA_PREVIOUS -> {
+              player.seekBackward()
+              return true
+            }
+          }
+        }
+      }
+      return super.onMediaButtonEvent(session, controllerInfo, intent)
+    }
+
     override fun onCustomCommand(
       session: MediaSession,
       controller: MediaSession.ControllerInfo,
@@ -387,5 +416,7 @@ class AudioPlayerService : MediaLibraryService() {
 
     private const val CUSTOM_COMMAND_SEEK_FORWARD = "app.campfire.media3.SEEK_FORWARD"
     private const val CUSTOM_COMMAND_SEEK_BACKWARD = "app.campfire.media3.SEEK_BACKWARD"
+
+    private const val BLUETOOTH_PACKAGE_NAME = "com.google.android.bluetooth"
   }
 }
