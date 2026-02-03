@@ -3,12 +3,17 @@ package app.campfire.db
 import app.campfire.CampfireDatabase
 import app.campfire.core.di.AppScope
 import app.campfire.data.Authors
+import app.campfire.data.AuthorsPage
+import app.campfire.data.AuthorsPageJoin
 import app.campfire.data.BookmarkFailedCreate
 import app.campfire.data.BookmarkFailedDelete
 import app.campfire.data.Bookmarks
+import app.campfire.data.CollectionsBookJoin
 import app.campfire.data.FilterData
 import app.campfire.data.Library
 import app.campfire.data.LibraryItem
+import app.campfire.data.LibraryItemPage
+import app.campfire.data.LibraryItemPageJoin
 import app.campfire.data.Media
 import app.campfire.data.MediaAudioFiles
 import app.campfire.data.MediaAudioTracks
@@ -17,6 +22,8 @@ import app.campfire.data.MediaProgress
 import app.campfire.data.Search_genres
 import app.campfire.data.Search_narrators
 import app.campfire.data.Search_tags
+import app.campfire.data.SeriesPage
+import app.campfire.data.SeriesPageJoin
 import app.campfire.data.Server
 import app.campfire.data.Session
 import app.campfire.data.Shelf
@@ -33,7 +40,7 @@ import me.tatarka.inject.annotations.Inject
  * Checkout [CampfireDatabaseImpl.Schema.version] for the current version. This should match
  * the latest migration file (if > 1) in `sqldelight/migrations`.
  */
-private const val OLD_DB_VERSION = 2
+private const val OLD_DB_VERSION = 3
 
 @ContributesBinding(AppScope::class)
 @Inject
@@ -155,6 +162,33 @@ class DatabaseFactory(
     ),
     shelfJoinAdapter = ShelfJoin.Adapter(
       shelfOrderAdapter = IntColumnAdapter,
+    ),
+    libraryItemPageAdapter = LibraryItemPage.Adapter(
+      pageAdapter = IntColumnAdapter,
+      nextPageAdapter = IntColumnAdapter,
+      totalAdapter = IntColumnAdapter,
+    ),
+    libraryItemPageJoinAdapter = LibraryItemPageJoin.Adapter(
+      pageIndexAdapter = IntColumnAdapter,
+    ),
+    authorsPageAdapter = AuthorsPage.Adapter(
+      pageAdapter = IntColumnAdapter,
+      nextPageAdapter = IntColumnAdapter,
+      totalAdapter = IntColumnAdapter,
+    ),
+    authorsPageJoinAdapter = AuthorsPageJoin.Adapter(
+      pageIndexAdapter = IntColumnAdapter,
+    ),
+    seriesPageAdapter = SeriesPage.Adapter(
+      pageAdapter = IntColumnAdapter,
+      nextPageAdapter = IntColumnAdapter,
+      totalAdapter = IntColumnAdapter,
+    ),
+    seriesPageJoinAdapter = SeriesPageJoin.Adapter(
+      pageIndexAdapter = IntColumnAdapter,
+    ),
+    collectionsBookJoinAdapter = CollectionsBookJoin.Adapter(
+      itemOrderAdapter = IntColumnAdapter,
     ),
   )
 }

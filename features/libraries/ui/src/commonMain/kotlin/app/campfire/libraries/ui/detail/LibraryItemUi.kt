@@ -158,7 +158,7 @@ fun LibraryItemContent(
             )
           }
 
-          if (state.user.type == Type.Admin) {
+          if (state.user.canEditCollections) {
             IconButton(
               onClick = {
                 Analytics.send(ActionEvent("add_to_collection", Click))
@@ -314,6 +314,7 @@ fun LibraryItemPreview() = PreviewSharedElementTransitionLayout {
               offlineDownload = offlineDownload,
               mediaProgress = mediaProgress,
               showConfirmDownloadDialogSetting = true,
+              isCurrentSession = false,
             ),
             SpacerSlot.medium("summary_spacer"),
             SummarySlot(libraryItem.media.metadata.description!!),

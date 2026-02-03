@@ -19,7 +19,6 @@ import app.campfire.network.envelopes.AuthorResponse
 import app.campfire.network.envelopes.BatchBooksRequest
 import app.campfire.network.envelopes.CollectionsResponse
 import app.campfire.network.envelopes.CreateBookmarkRequest
-import app.campfire.network.envelopes.LibraryItemsResponse
 import app.campfire.network.envelopes.LoginResponse
 import app.campfire.network.envelopes.MediaProgressUpdatePayload
 import app.campfire.network.envelopes.MinifiedLibraryItemsResponse
@@ -153,36 +152,6 @@ class KtorAudioBookShelfApi(
     hydratedClientRequest("/api/libraries/$libraryId")
   }
 
-  override suspend fun getLibraryItems(
-    libraryId: String,
-    filter: LibraryItemFilter?,
-    sortMode: String?,
-    sortDescending: Boolean,
-    page: Int,
-    limit: Int,
-  ): Result<List<LibraryItemExpanded>> {
-    return trySendRequest<LibraryItemsResponse> {
-      hydratedClientRequest(
-        {
-          appendPathSegments("api", "libraries", libraryId, "items")
-          parameters.append("minified", "0")
-          filter?.let { f ->
-            val filterValue = "${f.group}.${f.value.encodeBase64().encodeURLQueryComponent()}"
-            parameters.append("filter", filterValue)
-          }
-          sortMode?.let { parameters.append("sort", it) }
-          if (sortDescending) parameters.append("sort_desc", "1")
-          parameters.append("page", page.toString())
-          parameters.append("limit", limit.toString())
-        },
-      )
-    }.map { it.results }
-  }
-
-  @Deprecated(
-    "This endpoint is deprecated since it only returns the minified model",
-    replaceWith = ReplaceWith("getLibraryItems"),
-  )
   override suspend fun getLibraryItemsMinified(
     libraryId: String,
     filter: LibraryItemFilter?,
@@ -201,7 +170,7 @@ class KtorAudioBookShelfApi(
             parameters.append("filter", filterValue)
           }
           sortMode?.let { parameters.append("sort", it) }
-          if (sortDescending) parameters.append("sort_desc", "1")
+          if (sortDescending) parameters.append("desc", "1")
           if (page != INVALID) parameters.append("page", page.toString())
           if (limit != INVALID) parameters.append("limit", limit.toString())
         },
@@ -235,10 +204,41 @@ class KtorAudioBookShelfApi(
     }
   }
 
-  override suspend fun getSeries(libraryId: String): Result<List<Series>> {
+  override suspend fun getSeries(
+    libraryId: String,
+    filter: LibraryItemFilter?,
+    sortMode: String?,
+    sortDescending: Boolean,
+    page: Int,
+    limit: Int,
+  ): Result<PagedResponse<Series>> {
     return trySendRequest<SeriesResponse> {
-      hydratedClientRequest("/api/libraries/$libraryId/series?limit=1000")
-    }.map { it.results }
+      hydratedClientRequest(
+        {
+          appendPathSegments("api", "libraries", libraryId, "series")
+          filter?.let { f ->
+            val filterValue = "${f.group}.${f.value.encodeBase64().encodeURLQueryComponent()}"
+            parameters.append("filter", filterValue)
+          }
+          sortMode?.let { parameters.append("sort", it) }
+          if (sortDescending) parameters.append("desc", "1")
+          if (page != INVALID) parameters.append("page", page.toString())
+          if (limit != INVALID) {
+            parameters.append("limit", limit.toString())
+          } else {
+            parameters.append("limit", "1000")
+          }
+        },
+      )
+    }.map {
+      PagedResponse(
+        data = it.results,
+        page = it.page,
+        limit = it.limit,
+        total = it.total,
+        offset = it.page * it.limit,
+      )
+    }
   }
 
   override suspend fun getSeriesById(libraryId: String, seriesId: String): Result<Series> {
@@ -247,10 +247,32 @@ class KtorAudioBookShelfApi(
     }
   }
 
-  override suspend fun getAuthors(libraryId: String): Result<List<Author>> {
+  override suspend fun getAuthors(
+    libraryId: String,
+    sortMode: String?,
+    sortDescending: Boolean,
+    page: Int,
+    limit: Int,
+  ): Result<PagedResponse<Author>> {
     return trySendRequest<AuthorResponse> {
-      hydratedClientRequest("/api/libraries/$libraryId/authors")
-    }.map { it.authors }
+      hydratedClientRequest(
+        {
+          appendPathSegments("api", "libraries", libraryId, "authors")
+          sortMode?.let { parameters.append("sort", it) }
+          if (sortDescending) parameters.append("desc", "1")
+          if (page != INVALID) parameters.append("page", page.toString())
+          if (limit != INVALID) parameters.append("limit", limit.toString())
+        },
+      )
+    }.map {
+      PagedResponse(
+        data = it.results,
+        page = it.page,
+        limit = it.limit,
+        total = it.total,
+        offset = it.page * it.limit,
+      )
+    }
   }
 
   override suspend fun getAuthor(authorId: String): Result<Author> {

@@ -19,6 +19,7 @@ pluginManagement {
 
         content {
           includeGroup("com.r0adkll.swatchbuckler")
+          includeGroup("app.cash.sqldelight")
         }
       }
     }
@@ -46,6 +47,7 @@ dependencyResolutionManagement {
         mavenContent { snapshotsOnly() }
         content {
           includeGroup("com.r0adkll.swatchbuckler")
+          includeGroup("app.cash.sqldelight")
         }
       }
     }
@@ -63,7 +65,7 @@ dependencyResolutionManagement {
 }
 
 plugins {
-  id("org.jetbrains.kotlinx.kover.aggregation") version "0.9.4"
+  id("org.jetbrains.kotlinx.kover.aggregation") version "0.9.5"
 }
 
 extensions.configure<KoverSettingsExtension> {
@@ -198,6 +200,12 @@ include(
   ":features:stats:api",
   ":features:stats:impl",
   ":features:stats:ui",
+)
+include(
+  ":features:filters:api",
+  ":features:filters:impl",
+  ":features:filters:test",
+  ":features:filters:ui",
 )
 include(
   ":ui:appbar",

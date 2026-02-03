@@ -21,11 +21,12 @@ import app.campfire.core.coroutines.LoadState
 import app.campfire.core.coroutines.map
 import app.campfire.core.coroutines.onLoaded
 import app.campfire.core.di.UserScope
+import app.campfire.core.filter.ContentFilter
 import app.campfire.core.model.LibraryItem
 import app.campfire.core.model.MediaProgress
+import app.campfire.core.model.Session
 import app.campfire.core.session.UserSession
 import app.campfire.core.session.requiredUser
-import app.campfire.libraries.api.LibraryItemFilter
 import app.campfire.libraries.api.LibraryItemRepository
 import app.campfire.libraries.api.screen.LibraryItemScreen
 import app.campfire.libraries.api.screen.LibraryScreen
@@ -187,6 +188,7 @@ class LibraryItemPresenter(
         seriesContentState = seriesContentState,
         showTimeInBook = showTimeInBook,
         showConfirmDownloadDialog = showConfirmDownloadDialog,
+        session = currentSession.sessionOrNull(),
       )
     }
 
@@ -225,7 +227,7 @@ class LibraryItemPresenter(
         is LibraryItemUiEvent.NarratorClick -> {
           analytics.send(ActionEvent("narrator", Click))
           event.item.media.metadata.narratorName?.let { narrator ->
-            navigator.goTo(LibraryScreen(LibraryItemFilter.Narrators(narrator)))
+            navigator.goTo(LibraryScreen(ContentFilter.Narrators(narrator)))
           }
         }
 
@@ -330,6 +332,7 @@ private fun buildSlots(
   seriesContentState: LoadState<out List<LibraryItem>>,
   showTimeInBook: Boolean,
   showConfirmDownloadDialog: Boolean,
+  session: Session?,
 ): List<ContentSlot> {
   return buildList {
     this += CoverImageSlot(
@@ -356,6 +359,7 @@ private fun buildSlots(
       libraryItem = libraryItem,
       offlineDownload = offlineDownloadState,
       mediaProgress = mediaProgressState.dataOrNull,
+      isCurrentSession = session != null,
       showConfirmDownloadDialogSetting = showConfirmDownloadDialog,
     )
 

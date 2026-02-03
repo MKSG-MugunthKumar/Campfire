@@ -1,26 +1,27 @@
 package app.campfire.libraries
 
 import app.campfire.CampfireDatabase
-import app.campfire.account.api.UrlHydrator
 import app.campfire.core.coroutines.DispatcherProvider
 import app.campfire.core.di.SingleIn
 import app.campfire.core.di.UserScope
+import app.campfire.core.filter.ContentFilter
 import app.campfire.core.model.Library
 import app.campfire.core.model.LibraryId
-import app.campfire.core.model.LibraryItem
+import app.campfire.core.model.User
 import app.campfire.core.model.UserId
 import app.campfire.core.session.UserSession
 import app.campfire.core.session.userId
+import app.campfire.core.settings.ContentSortMode
 import app.campfire.core.settings.SortDirection
-import app.campfire.core.settings.SortMode
 import app.campfire.data.Library as DbLibrary
 import app.campfire.data.mapping.asDbModel
 import app.campfire.data.mapping.asDomainModel
 import app.campfire.data.mapping.asFetcherResult
 import app.campfire.data.mapping.store.debugLogging
-import app.campfire.libraries.api.LibraryItemFilter
 import app.campfire.libraries.api.LibraryRepository
-import app.campfire.libraries.items.LibraryItemsStore
+import app.campfire.libraries.api.paging.LibraryItemPager
+import app.campfire.libraries.paging.LibraryItemPagerFactory
+import app.campfire.libraries.paging.LibraryItemPagingInput
 import app.campfire.network.AudioBookShelfApi
 import app.campfire.user.api.UserRepository
 import app.cash.sqldelight.coroutines.asFlow
@@ -32,6 +33,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.withContext
 import me.tatarka.inject.annotations.Inject
@@ -50,14 +52,9 @@ class StoreLibraryRepository(
   private val api: AudioBookShelfApi,
   private val db: CampfireDatabase,
   private val userRepository: UserRepository,
-  private val urlHydrator: UrlHydrator,
-  private val libraryItemsStoreFactory: LibraryItemsStore.Factory,
+  private val libraryItemPagingFactory: LibraryItemPagerFactory,
   private val dispatcherProvider: DispatcherProvider,
 ) : LibraryRepository {
-
-  private val libraryItemStore by lazy {
-    libraryItemsStoreFactory.create()
-  }
 
   data class SingleLibraryRequest(val userId: UserId, val libraryId: LibraryId)
 
@@ -165,29 +162,33 @@ class StoreLibraryRepository(
       }
   }
 
-  override fun observeLibraryItems(
-    filter: LibraryItemFilter?,
-    sortMode: SortMode,
+  override fun createLibraryItemPager(
+    user: User,
+    filter: ContentFilter?,
+    sortMode: ContentSortMode,
     sortDirection: SortDirection,
-  ): Flow<List<LibraryItem>> {
+  ): LibraryItemPager {
+    val input = LibraryItemPagingInput(filter, sortMode, sortDirection)
+    return libraryItemPagingFactory.create(user, input)
+  }
+
+  override fun observeFilteredLibraryCount(
+    filter: ContentFilter?,
+    sortMode: ContentSortMode,
+    sortDirection: SortDirection,
+  ): Flow<Int?> {
     return userRepository.observeCurrentUser()
       .flatMapLatest { user ->
-        libraryItemStore
-          .stream(
-            StoreReadRequest.cached(
-              LibraryItemsStore.Query(
-                libraryId = user.selectedLibraryId,
-                filter = filter,
-                sortMode = sortMode,
-                sortDirection = sortDirection,
-              ),
-              refresh = true,
-            ),
+        val input = LibraryItemPagingInput(filter, sortMode, sortDirection)
+        db.libraryItemPageQueries
+          .selectOldestPage(
+            input = input.databaseKey,
+            userId = user.id,
+            libraryId = user.selectedLibraryId,
           )
-          .debugLogging("LibraryItemStore")
-          .mapNotNull {
-            it.dataOrNull()?.map { it.asDomainModel(urlHydrator) }
-          }
+          .asFlow()
+          .mapToOneOrNull(dispatcherProvider.databaseRead)
+          .map { it?.total }
       }
   }
 

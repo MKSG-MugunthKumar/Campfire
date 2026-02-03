@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Circle
 import androidx.compose.material.icons.rounded.CheckCircle
@@ -41,6 +42,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
@@ -48,7 +50,10 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import app.campfire.common.compose.extensions.thenIf
 import app.campfire.common.compose.extensions.thenIfNotNull
+import app.campfire.common.compose.icons.CampfireIcons
+import app.campfire.common.compose.icons.rounded.FatCheck
 import app.campfire.common.compose.util.rememberThemeDispatcherListener
 import app.campfire.core.model.LibraryItem
 import app.campfire.core.model.MediaProgress
@@ -120,6 +125,7 @@ fun LibraryItemCard(
           offlineStatus = offlineStatus,
           progress = progress,
           shape = shape,
+          large = showInformation,
         )
         if (showInformation) {
           LibraryItemCardInformation(
@@ -148,6 +154,7 @@ private fun LibraryItemCardImage(
   offlineStatus: OfflineStatus,
   progress: MediaProgress?,
   modifier: Modifier = Modifier,
+  large: Boolean = true,
   shape: Shape = MaterialTheme.shapes.largeIncreased,
 ) = SharedElementTransitionScope {
   val animationScope = findAnimatedScope(SharedElementTransitionScope.AnimatedScope.Navigation)
@@ -189,18 +196,43 @@ private fun LibraryItemCardImage(
     }
 
     progress?.let { mediaProgress ->
-      AnimatedVisibility(
-        visible = isTransitionVisible,
-        enter = fadeIn(),
-        exit = fadeOut(),
-        modifier = Modifier
-          .align(Alignment.BottomCenter),
-      ) {
-        MediaProgressBar(
-          mediaProgress = mediaProgress,
+      if (mediaProgress.isFinished) {
+        AnimatedVisibility(
+          visible = isTransitionVisible,
+          enter = fadeIn(),
+          exit = fadeOut(),
           modifier = Modifier
-            .fillMaxWidth(),
-        )
+            .align(Alignment.TopStart),
+        ) {
+          MediaFinishedIndicator(
+            size = if (large) 24.dp else 18.dp,
+            modifier = Modifier
+              .thenIf(
+                condition = large,
+                whenTrue = {
+                  Modifier.padding(8.dp)
+                },
+                whenFalse = {
+                  Modifier.padding(4.dp)
+                },
+              ),
+          )
+        }
+      } else {
+        AnimatedVisibility(
+          visible = isTransitionVisible,
+          enter = fadeIn(),
+          exit = fadeOut(),
+          modifier = Modifier
+            .align(Alignment.BottomCenter),
+        ) {
+          MediaProgressBar(
+            mediaProgress = mediaProgress,
+            trackHeight = if (large) LargeProgressBarHeight else SmallProgressBarHeight,
+            modifier = Modifier
+              .fillMaxWidth(),
+          )
+        }
       }
     }
 
@@ -327,10 +359,11 @@ private fun MediaProgressBar(
   modifier: Modifier = Modifier,
   trackColor: Color = MaterialTheme.colorScheme.primaryContainer,
   progressColor: Color = MaterialTheme.colorScheme.primary,
+  trackHeight: Dp = LargeProgressBarHeight,
 ) {
   Canvas(
     modifier = modifier
-      .height(ProgressBarHeight),
+      .height(trackHeight),
   ) {
     // Draw Track
     drawRect(
@@ -339,7 +372,7 @@ private fun MediaProgressBar(
       alpha = ProgressBarAlpha,
     )
 
-    val cornerRadiusPx = ProgressBarHeight.toPx() / 2f
+    val cornerRadiusPx = trackHeight.toPx() / 2f
     val progressSize = size.copy(
       width = (size.width * mediaProgress.actualProgress) + cornerRadiusPx,
     )
@@ -348,6 +381,34 @@ private fun MediaProgressBar(
       topLeft = Offset(x = -cornerRadiusPx, y = 0f),
       size = progressSize,
       cornerRadius = CornerRadius(cornerRadiusPx),
+    )
+  }
+}
+
+@Composable
+private fun MediaFinishedIndicator(
+  modifier: Modifier = Modifier,
+  size: Dp = 24.dp,
+  contentColor: Color = Color.Green,
+  containerColor: Color = MaterialTheme.colorScheme.surface,
+) {
+  Box(
+    modifier = modifier
+      .shadow(
+        elevation = 1.dp,
+        shape = CircleShape,
+      )
+      .background(
+        color = containerColor,
+        shape = CircleShape,
+      ),
+  ) {
+    Icon(
+      CampfireIcons.Rounded.FatCheck,
+      contentDescription = null,
+      tint = contentColor,
+      modifier = Modifier
+        .size(size),
     )
   }
 }
@@ -404,5 +465,6 @@ fun OfflineStatusIndicator(
 
 private val LibraryItemMarqueeVelocity = 40.dp
 
-private val ProgressBarHeight = 12.dp
+private val SmallProgressBarHeight = 8.dp
+private val LargeProgressBarHeight = 12.dp
 private const val ProgressBarAlpha = 0.5f

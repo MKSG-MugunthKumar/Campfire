@@ -14,6 +14,7 @@ kotlin {
         implementation(projects.features.series.api)
         implementation(projects.features.sessions.api)
         implementation(projects.features.user.api)
+        implementation(projects.features.filters.api)
         implementation(projects.ui.appbar)
         implementation(projects.ui.navigation)
         implementation(projects.ui.theming.api)
@@ -22,6 +23,8 @@ kotlin {
         implementation(libs.compose.rich.text)
         implementation(libs.swatchbuckler.compose)
         implementation(libs.swatchbuckler.coil)
+        implementation(libs.androidx.paging.common)
+        implementation(libs.androidx.paging.compose)
       }
     }
 
