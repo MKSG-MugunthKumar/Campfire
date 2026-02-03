@@ -143,7 +143,7 @@ class ExoPlayerAudioPlayer(
     appPackageName = context.packageName,
   )
 
-  internal val remoteControlPlayer: Player = remoteControlForwardingPlayer
+  internal val remoteControlPlayer: Player get() = remoteControlForwardingPlayer
 
   /**
    * Binds the MediaSession to the remote control forwarding player.
