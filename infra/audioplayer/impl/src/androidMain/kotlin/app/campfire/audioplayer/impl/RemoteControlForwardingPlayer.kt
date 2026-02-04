@@ -47,7 +47,8 @@ class RemoteControlForwardingPlayer(
 
     // Notification and Android Auto have custom seek buttons - skip should always be chapter skip
     if (currentSession.isMediaNotificationController(controller) ||
-      currentSession.isAutoCompanionController(controller)) {
+      currentSession.isAutoCompanionController(controller)
+    ) {
       return false
     }
 

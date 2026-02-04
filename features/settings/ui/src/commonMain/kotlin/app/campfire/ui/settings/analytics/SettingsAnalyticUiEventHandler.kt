@@ -74,7 +74,11 @@ class SettingsAnalyticUiEventHandler(
       is BackwardTime -> send("backward_time", Updated, event.backwardTime.inWholeMilliseconds)
       is TrackResetThreshold -> send("track_reset_threshold", Updated, event.trackResetThreshold.inWholeMilliseconds)
       is Mp3IndexSeeking -> send("mp3_index_seeking", Updated, event.mp3IndexSeeking)
-      is RemoteNextPrevSkipsChapters -> send("remote_next_prev_skip_chapters", Updated, event.remoteNextPrevSkipsChapters)
+      is RemoteNextPrevSkipsChapters -> send(
+        "remote_next_prev_skip_chapters",
+        Updated,
+        event.remoteNextPrevSkipsChapters,
+      )
     }
 
     is SettingsUiEvent.SleepSettingEvent -> when (event) {
