@@ -7,6 +7,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.view.KeyEvent
 import androidx.core.app.NotificationChannelCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
@@ -81,7 +82,9 @@ class AudioPlayerService : MediaLibraryService() {
     // Create ExoPlayer instance and MediaSession instance that encapsulates the background
     // playback on Android.
     player = component.exoPlayerFactory.create(this)
-    session = MediaLibrarySession.Builder(this, player.player, MediaSessionCallback())
+    // Use remoteControlPlayer for MediaSession so remote control commands (Bluetooth, car stereo)
+    // can be intercepted and handled based on user settings, while in-app UI uses the direct player.
+    session = MediaLibrarySession.Builder(this, player.remoteControlPlayer, MediaSessionCallback())
       .setSessionActivity(
         PendingIntent.getActivity(
           this,
@@ -91,6 +94,10 @@ class AudioPlayerService : MediaLibraryService() {
         ),
       )
       .build()
+
+    // Bind the session to the player so it can identify the source of remote control commands
+    // and apply user settings only for external controllers (Bluetooth, car stereo, etc.)
+    player.bindSession(session!!)
 
     // Attach the Android playback implementation to the controller used by other parts of the
     // to access and control playback / session.
@@ -202,6 +209,34 @@ class AudioPlayerService : MediaLibraryService() {
       } else {
         return super.onConnect(session, controller)
       }
+    }
+
+    override fun onMediaButtonEvent(
+      session: MediaSession,
+      controllerInfo: MediaSession.ControllerInfo,
+      intent: Intent,
+    ): Boolean {
+      // Handle Bluetooth next/prev based on user settings.
+      // Media3 routes Bluetooth key events through this callback before processing them,
+      // allowing us to intercept and redirect next/prev to seek when the setting is disabled.
+      if (controllerInfo.packageName == BLUETOOTH_PACKAGE_NAME &&
+        !component.playbackSettings.remoteNextPrevSkipsChapters
+      ) {
+        val keyEvent = intent.getParcelableExtra<KeyEvent>(Intent.EXTRA_KEY_EVENT)
+        if (keyEvent?.action == KeyEvent.ACTION_DOWN) {
+          when (keyEvent.keyCode) {
+            KeyEvent.KEYCODE_MEDIA_NEXT -> {
+              player.seekForward()
+              return true
+            }
+            KeyEvent.KEYCODE_MEDIA_PREVIOUS -> {
+              player.seekBackward()
+              return true
+            }
+          }
+        }
+      }
+      return super.onMediaButtonEvent(session, controllerInfo, intent)
     }
 
     override fun onCustomCommand(
@@ -381,5 +416,7 @@ class AudioPlayerService : MediaLibraryService() {
 
     private const val CUSTOM_COMMAND_SEEK_FORWARD = "app.campfire.media3.SEEK_FORWARD"
     private const val CUSTOM_COMMAND_SEEK_BACKWARD = "app.campfire.media3.SEEK_BACKWARD"
+
+    private const val BLUETOOTH_PACKAGE_NAME = "com.google.android.bluetooth"
   }
 }

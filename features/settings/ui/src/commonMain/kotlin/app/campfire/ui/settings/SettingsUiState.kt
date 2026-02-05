@@ -54,6 +54,7 @@ data class PlaybackSettingsInfo(
   val backwardTime: Duration,
   val trackResetThreshold: Duration,
   val mp3IndexSeeking: Boolean,
+  val remoteNextPrevSkipsChapters: Boolean,
 )
 
 @Immutable
@@ -141,6 +142,7 @@ sealed interface SettingsUiEvent : CircuitUiEvent {
     data class BackwardTime(val backwardTime: Duration) : PlaybackSettingEvent
     data class TrackResetThreshold(val trackResetThreshold: Duration) : PlaybackSettingEvent
     data class Mp3IndexSeeking(val mp3IndexSeeking: Boolean) : PlaybackSettingEvent
+    data class RemoteNextPrevSkipsChapters(val remoteNextPrevSkipsChapters: Boolean) : PlaybackSettingEvent
   }
 
   // Sleep Setting Events

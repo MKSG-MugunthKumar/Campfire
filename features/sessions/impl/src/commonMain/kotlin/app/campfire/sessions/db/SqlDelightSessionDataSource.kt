@@ -96,6 +96,7 @@ class SqlDelightSessionDataSource(
     duration: Duration,
     currentTime: Duration,
     startedAt: LocalDateTime,
+    forceNew: Boolean,
   ): Session {
     val currentUserId = userSession.requiredUserId
 
@@ -106,7 +107,7 @@ class SqlDelightSessionDataSource(
 
     // If an existing session has been updated withing allowed time interval,
     // just re-use the session
-    if (existingSession != null) {
+    if (existingSession != null && !forceNew) {
       val now = fatherTime.now()
       val elapsed = now.epochMilliseconds - existingSession.updatedAt.epochMilliseconds
       if (elapsed <= devSettings.sessionAge.inWholeMilliseconds && now.date == existingSession.updatedAt.date) {

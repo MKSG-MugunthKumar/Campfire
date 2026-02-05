@@ -25,6 +25,7 @@ interface SessionDataSource {
     duration: Duration,
     currentTime: Duration,
     startedAt: LocalDateTime,
+    forceNew: Boolean = false,
   ): Session
 
   suspend fun updateCurrentTime(
