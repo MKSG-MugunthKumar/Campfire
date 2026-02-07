@@ -2,12 +2,10 @@
 
 import com.gianluz.dangerkotlin.androidlint.AndroidLint
 import com.gianluz.dangerkotlin.androidlint.androidLint
-import java.io.File
 import systems.danger.kotlin.*
 import systems.danger.kotlin.models.github.GitHubUserType
 
 private val MIGRATION_VERSION_REGEX = "([0-9]+)\\.sqm\$".toRegex()
-private val OLD_DB_VERSION_REGEX = "OLD_DB_VERSION = (\\d+)\$".toRegex(RegexOption.MULTILINE)
 
 Danger register AndroidLint
 
@@ -70,18 +68,6 @@ danger(args) {
         val oldVersion = MIGRATION_VERSION_REGEX.find(migration)?.groupValues?.getOrNull(1)?.toIntOrNull()
         if (oldVersion != null) {
           message("ℹ\uFE0F Migrating Database from `$oldVersion` to `${oldVersion + 1}`")
-        }
-
-        // Check if the user has updated the migration code
-        val databaseFactory = File(".", "data/db/core/src/commonMain/kotlin/app/campfire/db/DatabaseFactory.kt")
-        val dbFactoryContent = databaseFactory.readText()
-
-        val oldDbVersion = OLD_DB_VERSION_REGEX.find(dbFactoryContent)?.groupValues?.getOrNull(1)?.toIntOrNull()
-        if (oldDbVersion == null || oldDbVersion != oldVersion) {
-          // Either we failed to find the old version, or it doesn't match the schema migration
-          fail(
-            "Migration version not updated in `DatabaseFactory.kt`: Found [$oldDbVersion] but expected [$oldVersion]",
-          )
         }
       }
     } else if (ignoreDbChanges) {

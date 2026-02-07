@@ -45,6 +45,8 @@ import app.campfire.audioplayer.offline.OfflineDownload
 import app.campfire.collections.api.ui.AddToCollectionDialog
 import app.campfire.common.compose.CampfireWindowInsets
 import app.campfire.common.compose.LocalWindowSizeClass
+import app.campfire.common.compose.icons.CampfireIcons
+import app.campfire.common.compose.icons.rounded.QueuePlayNext
 import app.campfire.common.compose.layout.ContentLayout
 import app.campfire.common.compose.layout.LocalContentLayout
 import app.campfire.common.compose.theme.CampfireTheme
@@ -154,7 +156,6 @@ fun LibraryItemContent(
               onColorClicked = {
                 state.eventSink(LibraryItemUiEvent.SeedColorChange(it))
               },
-              modifier = Modifier.padding(end = 8.dp),
             )
           }
 
@@ -168,6 +169,33 @@ fun LibraryItemContent(
               Icon(
                 Icons.Rounded.LibraryAdd,
                 contentDescription = stringResource(Res.string.cd_add_to_collection),
+              )
+            }
+          }
+
+          AnimatedVisibility(
+            visible = !state.isCurrentlyPlaying,
+            modifier = Modifier,
+            enter = fadeIn(),
+            exit = fadeOut(),
+          ) {
+            IconButton(
+              enabled = state.libraryItem != null,
+              onClick = {
+                if (state.isQueued) {
+                  Analytics.send(ActionEvent("remove_from_queue", Click))
+                  state.eventSink(LibraryItemUiEvent.RemoveFromQueue)
+                } else {
+                  Analytics.send(ActionEvent("add_to_queue", Click))
+                  state.eventSink(LibraryItemUiEvent.AddToQueue)
+                }
+              },
+            ) {
+              Icon(
+                if (state.isQueued) {
+                  CampfireIcons.Filled.QueuePlayNext
+                } else CampfireIcons.Rounded.QueuePlayNext,
+                contentDescription = null,
               )
             }
           }
@@ -353,6 +381,8 @@ fun LibraryItemPreview() = PreviewSharedElementTransitionLayout {
           ),
         ),
         showConfirmDownloadDialog = false,
+        isQueued = false,
+        isCurrentlyPlaying = false,
         eventSink = {},
       )
 

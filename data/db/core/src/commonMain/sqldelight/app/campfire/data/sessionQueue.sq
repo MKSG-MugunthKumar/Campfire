@@ -1,0 +1,48 @@
+import kotlin.Int;
+
+CREATE TABLE sessionQueue (
+  userId TEXT NOT NULL,
+  libraryItemId TEXT NOT NULL,
+  queueIndex INTEGER AS Int NOT NULL,
+
+  PRIMARY KEY (userId, libraryItemId),
+  FOREIGN KEY (userId) REFERENCES user(id) ON DELETE CASCADE
+);
+
+-- Queries
+
+insert:
+INSERT OR FAIL INTO sessionQueue
+VALUES ?;
+
+updateIndex:
+UPDATE sessionQueue
+SET queueIndex = ?
+WHERE userId = ?
+  AND libraryItemId = ?;
+
+delete:
+DELETE FROM sessionQueue
+WHERE userId = ?
+  AND libraryItemId = ?;
+
+deleteAll:
+DELETE FROM sessionQueue
+WHERE userId = ?;
+
+getHighestIndex:
+SELECT queueIndex FROM sessionQueue
+ORDER BY queueIndex DESC LIMIT 1;
+
+selectAll:
+SELECT * FROM sessionQueue
+WHERE userId = ?
+ORDER BY queueIndex ASC;
+
+selectForUser:
+SELECT libraryItem.*, media.*, mediaProgress.* FROM libraryItem
+INNER JOIN sessionQueue ON sessionQueue.libraryItemId = libraryItem.id
+INNER JOIN media ON media.libraryItemId = libraryItem.id
+LEFT JOIN mediaProgress ON mediaProgress.libraryItemId = libraryItem.id
+WHERE sessionQueue.userId = ?
+ORDER BY sessionQueue.queueIndex ASC;

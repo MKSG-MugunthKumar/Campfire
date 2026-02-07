@@ -6,4 +6,6 @@ object CampfireIcons {
   object Tents
 
   object Theme
+
+  object Filled
 }
