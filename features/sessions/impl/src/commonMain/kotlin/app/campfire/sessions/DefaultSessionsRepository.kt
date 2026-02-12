@@ -63,14 +63,14 @@ class DefaultSessionsRepository(
       },
       mediaPlayer = "campfire",
       duration = libraryItem.media.durationInMillis.milliseconds,
+      // MediaProgress is the single source of truth for resume position.
+      // Finished books restart from the beginning.
       currentTime = if (progress?.isFinished == true) {
-        // Reset to beginning for finished audiobooks so playback can restart
         0.seconds
       } else {
         progress?.currentTime?.seconds ?: 0.seconds
       },
       startedAt = startedAt,
-      forceNew = progress?.isFinished == true,
     )
   }
 

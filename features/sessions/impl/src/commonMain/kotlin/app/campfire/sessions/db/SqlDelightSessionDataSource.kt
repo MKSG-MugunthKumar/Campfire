@@ -96,7 +96,6 @@ class SqlDelightSessionDataSource(
     duration: Duration,
     currentTime: Duration,
     startedAt: LocalDateTime,
-    forceNew: Boolean,
   ): Session {
     val currentUserId = userSession.requiredUserId
 
@@ -105,23 +104,33 @@ class SqlDelightSessionDataSource(
         .awaitAsOneOrNull()
     }
 
-    // If an existing session has been updated withing allowed time interval,
-    // just re-use the session
-    if (existingSession != null && !forceNew) {
+    // If an existing session has been updated within allowed time interval,
+    // reuse its identity (session ID, timeListening) but always take the resume
+    // position from the passed currentTime (sourced from MediaProgress).
+    if (existingSession != null) {
       val now = fatherTime.now()
       val elapsed = now.epochMilliseconds - existingSession.updatedAt.epochMilliseconds
       if (elapsed <= devSettings.sessionAge.inWholeMilliseconds && now.date == existingSession.updatedAt.date) {
         bark {
           "Existing session is still young enough[${elapsed.milliseconds} < ${devSettings.sessionAge}], " +
-            "returning it."
+            "reusing with position from MediaProgress."
         }
         withContext(dispatcherProvider.databaseWrite) {
           db.sessionQueries.transaction {
             db.sessionQueries.deactivateAll(currentUserId)
             db.sessionQueries.activateOnly(libraryItemId, currentUserId)
+            // Sync resume position from MediaProgress (the single source of truth)
+            db.sessionQueries.updatePlayback(
+              currentTime = currentTime,
+              updatedAt = now,
+              libraryItemId = libraryItemId,
+              userId = currentUserId,
+            )
           }
         }
-        return hydrateSession(existingSession)
+        return hydrateSession(
+          existingSession.copy(currentTime = currentTime, isActive = true, updatedAt = now),
+        )
       } else {
         bark {
           "Existing session is too old, creating new. Age [${elapsed.milliseconds}], " +
@@ -130,14 +139,8 @@ class SqlDelightSessionDataSource(
       }
     }
 
-    // If we DID have an old session and we're NOT forcing a new one, re-use its timestamps
-    // instead of the passed media progress timestamps. When forceNew is true (e.g. replaying
-    // a finished book), we must use the passed currentTime to avoid inheriting the old
-    // session's position (which could be at the end of the book).
-    val newStartTime = if (forceNew) currentTime else existingSession?.currentTime ?: currentTime
-    val newCurrentTime = if (forceNew) currentTime else existingSession?.currentTime ?: currentTime
-
-    // If there is no existing, or its too old. Create a new session.
+    // No existing session or it's too old — create a new one.
+    // Always use the passed currentTime from MediaProgress.
     bark { "Creating new session for library item" }
     return withContext(dispatcherProvider.databaseWrite) {
       val dbSession = DbSession(
@@ -150,8 +153,8 @@ class SqlDelightSessionDataSource(
         playMethod = playMethod,
         mediaPlayer = mediaPlayer,
         timeListening = 0.seconds,
-        startTime = newStartTime,
-        currentTime = newCurrentTime,
+        startTime = currentTime,
+        currentTime = currentTime,
         startedAt = fatherTime.now(),
         updatedAt = fatherTime.now(),
       )
