@@ -130,10 +130,12 @@ class SqlDelightSessionDataSource(
       }
     }
 
-    // If we DID have an old session, we'll want to re-use its time stamps instead of the passed, media progress,
-    // timestamps.
-    val newStartTime = existingSession?.currentTime ?: currentTime
-    val newCurrentTime = existingSession?.currentTime ?: currentTime
+    // If we DID have an old session and we're NOT forcing a new one, re-use its timestamps
+    // instead of the passed media progress timestamps. When forceNew is true (e.g. replaying
+    // a finished book), we must use the passed currentTime to avoid inheriting the old
+    // session's position (which could be at the end of the book).
+    val newStartTime = if (forceNew) currentTime else existingSession?.currentTime ?: currentTime
+    val newCurrentTime = if (forceNew) currentTime else existingSession?.currentTime ?: currentTime
 
     // If there is no existing, or its too old. Create a new session.
     bark { "Creating new session for library item" }
